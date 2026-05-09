@@ -12,6 +12,18 @@ image = modal.Image.debian_slim().pip_install("numpy")
 
 
 @app.function(image=image)
+def tribe_mock_infer(video_bytes: bytes) -> list:
+    """Mock inference. Returns a fake 4D voxel timeseries.
+
+    Real version: decode video → preprocess frames → run TribeV2 → return
+    voxel activation over time.
+    """
+    import numpy as np
+
+    voxels = np.random.rand(20, 10, 10, 10).astype(np.float32)
+    return voxels.tolist()
+
+@app.function(image=image)
 def tribe_infer(video_bytes: bytes) -> list:
     """Mock inference. Returns a fake 4D voxel timeseries.
 

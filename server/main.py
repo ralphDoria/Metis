@@ -21,7 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-tribe_infer = modal.Function.from_name("metaware-tribe", "tribe_infer")
+tribe_mock_infer = modal.Function.from_name("metaware-tribe", "tribe_mock_infer")
 
 
 def parse_voxels(voxels: list) -> dict:
@@ -39,7 +39,7 @@ def parse_voxels(voxels: list) -> dict:
 @app.post("/process")
 async def process(video: UploadFile = File(...)):
     video_bytes = await video.read()
-    voxels = tribe_infer.remote(video_bytes)
+    voxels = tribe_mock_infer.remote(video_bytes)
     parsed = parse_voxels(voxels)
     return {**parsed, "voxels": voxels}
 

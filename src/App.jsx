@@ -1,13 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const API_URL = 'http://localhost:8000/process'
-
-function formatSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 function App() {
   const inputRef = useRef(null)
@@ -16,6 +10,17 @@ function App() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
+  const [videoUrl, setVideoUrl] = useState(null)
+
+  useEffect(() => {
+    if (!file) {
+      setVideoUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(file)
+    setVideoUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
 
   const acceptFile = (f) => {
     if (!f) return
@@ -87,47 +92,46 @@ function App() {
         </p>
       </header>
 
-      <section
-        className={`dropzone ${dragging ? 'is-dragging' : ''} ${file ? 'has-file' : ''}`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click()
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="video/mp4"
-          onChange={onChange}
-          hidden
-        />
-        {file ? (
-          <div className="file-info">
-            <p className="file-name">{file.name}</p>
-            <p className="file-size">{formatSize(file.size)}</p>
-            <button
-              type="button"
-              className="clear"
-              onClick={(e) => {
-                e.stopPropagation()
-                onClear()
-              }}
-            >
-              Clear
-            </button>
-          </div>
-        ) : (
+      {!file && (
+        <section
+          className={`dropzone ${dragging ? 'is-dragging' : ''}`}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={() => inputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click()
+          }}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="video/mp4"
+            onChange={onChange}
+            hidden
+          />
           <div className="prompt">
             <p className="prompt-primary">Drop an MP4 here</p>
             <p className="prompt-secondary">or click to upload</p>
           </div>
-        )}
-      </section>
+        </section>
+      )}
+
+      {videoUrl && (
+        <section className="preview">
+          <video src={videoUrl} controls className="video" />
+          <button
+            type="button"
+            className="close"
+            onClick={onClear}
+            aria-label="Remove video"
+          >
+            ×
+          </button>
+        </section>
+      )}
 
       {file && (
         <button
