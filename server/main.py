@@ -9,6 +9,7 @@ Run:
     uvicorn server.main:app --reload
 """
 
+import asyncio
 import logging
 import mimetypes
 import uuid
@@ -37,16 +38,16 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    # Allow: localhost dev, the API host itself, the production frontend
-    # (trymetis.web.app), and Firebase Hosting preview channels
-    # (trymetis--<channel>-<hash>.web.app).
+    # Allow: Chrome extension origins, localhost dev, the API host itself,
+    # the production frontend (trymetis.web.app), and Firebase Hosting
+    # preview channels (trymetis--<channel>-<hash>.web.app).
     allow_origin_regex=(
-        r"https?://("
+        r"^(chrome-extension://.+|https?://("
         r"localhost(:\d+)?"
         r"|(.+\.)?mnkjoshi\.ca"
         r"|trymetis\.web\.app"
         r"|trymetis--[a-z0-9-]+\.web\.app"
-        r")"
+        r"))$"
     ),
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,6 +56,10 @@ app.add_middleware(
 # Real TribeV2 inference on Modal GPU. Swap to `tribe_mock_infer` (Function.from_name)
 # while iterating without GPU cost.
 Tribe = modal.Cls.from_name("metaware-tribe", "Tribe")
+
+# In-flight FunctionCalls keyed by client-supplied job_id, so that the extension
+# can abort an inference run when the user has already scrolled past the reel.
+ACTIVE_JOBS: dict[str, modal.functions.FunctionCall] = {}
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_PREDS_PATH = REPO_ROOT / "tribev2_sample_predictions.csv"
@@ -101,14 +106,42 @@ def _persist_session(parsed: dict, brain: dict, video: UploadFile | None, video_
 
 
 @app.post("/process")
-async def process(video: UploadFile = File(...)):
+async def process(video: UploadFile = File(...), job_id: str | None = None):
     video_bytes = await video.read()
-    result = Tribe().infer.remote(video_bytes)
+    fc = Tribe().infer.spawn(video_bytes)
+    if job_id:
+        ACTIVE_JOBS[job_id] = fc
+    try:
+        # `fc.get()` blocks until the Modal call returns or is cancelled. Run on
+        # a thread so the FastAPI event loop stays responsive (and the cancel
+        # endpoint can run concurrently to abort this same FunctionCall).
+        result = await asyncio.to_thread(fc.get)
+    except Exception as exc:
+        # If we lost the job from the registry, treat as cancelled.
+        if job_id and job_id not in ACTIVE_JOBS:
+            raise HTTPException(status_code=499, detail="cancelled") from exc
+        raise
+    finally:
+        if job_id:
+            ACTIVE_JOBS.pop(job_id, None)
     preds = np.asarray(result["preds"], dtype=np.float32)
     parsed = parse_preds(preds)
     brain = _build_brain_payload(preds)
     session_id = _persist_session(parsed, brain, video, len(video_bytes))
     return {**parsed, "brain": brain, "session_id": session_id}
+
+
+@app.post("/process/cancel/{job_id}")
+def cancel_process(job_id: str):
+    fc = ACTIVE_JOBS.pop(job_id, None)
+    if fc is None:
+        return {"cancelled": False, "reason": "not_found"}
+    try:
+        fc.cancel()
+    except Exception:
+        log.exception("Failed to cancel Modal call %s", job_id)
+        return {"cancelled": False, "reason": "cancel_failed"}
+    return {"cancelled": True}
 
 
 @app.get("/demo")
