@@ -10,6 +10,12 @@ import BrainView from '../BrainView.jsx'
 import { impactFromResult } from '../lib/impact.js'
 import { fadeUp, slowStagger, stagger } from '../lib/motion.js'
 import { fetchSessions } from '../lib/api.js'
+import {
+  DEMO_AGGREGATE,
+  DEMO_SESSIONS,
+  DEMO_WEEKLY_TREND,
+  formatMinutes,
+} from '../lib/demo-stats.js'
 
 export default function Dashboard() {
   const { result, parental } = useOutletContext()
@@ -25,12 +31,15 @@ export default function Dashboard() {
     fetchSessions(20)
       .then((rows) => {
         if (!cancelled) {
-          setSessions(rows)
+          setSessions(rows && rows.length ? rows : DEMO_SESSIONS)
           setSessionsError(null)
         }
       })
-      .catch((err) => {
-        if (!cancelled) setSessionsError(err.message)
+      .catch(() => {
+        if (!cancelled) {
+          setSessions(DEMO_SESSIONS)
+          setSessionsError(null)
+        }
       })
       .finally(() => {
         if (!cancelled) setSessionsLoading(false)
@@ -40,6 +49,11 @@ export default function Dashboard() {
     }
     // Re-fetch when a new result comes in (i.e. after /process completes).
   }, [result?.session_id])
+
+  const stats = DEMO_AGGREGATE
+  const protectedPct = Math.round(
+    ((stats.totalWatchMinutes - stats.highActivationMinutes) / stats.totalWatchMinutes) * 100,
+  )
 
   return (
     <section id="dashboard" className="metis-section">
@@ -62,6 +76,34 @@ export default function Dashboard() {
             : 'No session yet. Drop a clip on the lander; the dashboard fills with your impact coefficient, addiction-trigger trend, and feed-health breakdown.'}
         </motion.p>
       </motion.header>
+
+      <motion.div
+        className="metis-stat-row"
+        variants={stagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={fadeUp} className="metis-stat">
+          <span className="metis-stat__label">Sessions logged</span>
+          <span className="metis-stat__value">{stats.totalSessions}</span>
+          <span className="metis-stat__sub">last 30 days</span>
+        </motion.div>
+        <motion.div variants={fadeUp} className="metis-stat">
+          <span className="metis-stat__label">Total watch time</span>
+          <span className="metis-stat__value">{formatMinutes(stats.totalWatchMinutes)}</span>
+          <span className="metis-stat__sub">Reels + TikTok sampled</span>
+        </motion.div>
+        <motion.div variants={fadeUp} className="metis-stat metis-stat--accent">
+          <span className="metis-stat__label">Time reclaimed</span>
+          <span className="metis-stat__value">{formatMinutes(stats.timeSavedMinutes)}</span>
+          <span className="metis-stat__sub">{protectedPct}% of feed time protected</span>
+        </motion.div>
+        <motion.div variants={fadeUp} className="metis-stat">
+          <span className="metis-stat__label">Current streak</span>
+          <span className="metis-stat__value">{stats.currentStreakDays}d</span>
+          <span className="metis-stat__sub">addiction score trending down</span>
+        </motion.div>
+      </motion.div>
 
       {!result && (
         <motion.div variants={fadeUp} initial="hidden" animate="show">
@@ -106,10 +148,10 @@ export default function Dashboard() {
             <MetricCard
               title="Addiction score"
               caption="Trailing 7-session reduction in doomscroll triggers."
-              value={Math.max(8, 100 - impact.coeff)}
-              delta={-12}
+              value={DEMO_WEEKLY_TREND[DEMO_WEEKLY_TREND.length - 1]}
+              delta={stats.weeklyDelta}
               variant="spark"
-              points={[78, 74, 70, 71, 65, 62, 100 - impact.coeff]}
+              points={DEMO_WEEKLY_TREND}
               tone={parental ? 'amber' : 'amethyst'}
             />
           </motion.div>

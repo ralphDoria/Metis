@@ -625,6 +625,71 @@
   }
 }
 
+/* ---------------- Dashboard stat row ---------------- */
+.metis-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 28px;
+}
+
+.metis-stat {
+  position: relative;
+  border-radius: var(--metis-radius-xl);
+  padding: 18px 20px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid var(--metis-border-strong);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.metis-stat--accent::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 80% at 100% 0%,
+    rgba(255, 140, 0, 0.18) 0%, transparent 60%);
+  z-index: -1;
+}
+
+.metis-stat__label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--metis-text-faint);
+}
+
+.metis-stat__value {
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #f5f3ff;
+}
+
+.metis-stat--accent .metis-stat__value { color: #ffd9a8; }
+
+.metis-stat__sub {
+  font-size: 12px;
+  color: var(--metis-text-soft);
+}
+
+@media (max-width: 980px) {
+  .metis-stat-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .metis-impact-coeff {
   font-size: 12px;
   letter-spacing: 0.14em;
