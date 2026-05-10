@@ -20,9 +20,6 @@ __pycache__/
 # Test assets (large binaries, not source)
 Assets/
 
-# Pipeline output artifacts
-*_predictions.csv
-
 # Generated brain visualization assets (regenerated on server start / per job)
 server/static/
 
