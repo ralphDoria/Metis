@@ -81,12 +81,20 @@ React renders feedback
 
 Three processes for full local dev (run in three terminals):
 
-1. **Deploy Modal pipeline** (one-time per code change):
+1. **Deploy Modal pipeline** (rerun after edits to `pipeline/modal_app.py`):
    ```bash
    source .venv/bin/activate
    modal deploy pipeline/modal_app.py
    ```
-   Smoke test: `modal run pipeline/modal_app.py`
+   First deploy of the real `Tribe` class takes 10–20 min (heavy ML deps in
+   image build). Subsequent deploys reuse the cached image and are fast.
+   Smoke test the mock function: `modal run pipeline/modal_app.py`.
+
+   Pre-flight (one-time):
+   - Request HuggingFace access for Llama-3.2 (gated model used by TribeV2).
+   - Create Modal secret: `modal secret create huggingface HF_TOKEN=hf_xxx HUGGING_FACE_HUB_TOKEN=hf_xxx`.
+   - The class uses GPU `A10G` and a persistent `tribev2-cache` Modal Volume
+     to avoid re-downloading the ~1 GB checkpoint each cold start.
 
 2. **Local FastAPI server**:
    ```bash

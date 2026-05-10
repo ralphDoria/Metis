@@ -21,11 +21,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-tribe_mock_infer = modal.Function.from_name("metaware-tribe", "tribe_mock_infer")
+# Real TribeV2 inference on Modal GPU. Swap to `tribe_mock_infer` (Function.from_name)
+# while iterating without GPU cost.
+Tribe = modal.Cls.from_name("metaware-tribe", "Tribe")
 
 
-def parse_voxels(voxels: list) -> dict:
-    """Mock parser. Real version derives session-level activation stats."""
+def parse_preds(preds: list) -> dict:
+    """Mock parser. Real version derives session-level activation stats from
+    cortex predictions of shape (n_timesteps, n_vertices)."""
     return {
         "high_activation_minutes": 14,
         "total_minutes": 20,
@@ -39,9 +42,9 @@ def parse_voxels(voxels: list) -> dict:
 @app.post("/process")
 async def process(video: UploadFile = File(...)):
     video_bytes = await video.read()
-    voxels = tribe_mock_infer.remote(video_bytes)
-    parsed = parse_voxels(voxels)
-    return {**parsed, "voxels": voxels}
+    result = Tribe().infer.remote(video_bytes)
+    parsed = parse_preds(result["preds"])
+    return {**parsed, **result}
 
 
 @app.get("/health")

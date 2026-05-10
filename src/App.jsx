@@ -67,13 +67,8 @@ function App() {
       const res = await fetch(API_URL, { method: 'POST', body: formData })
       if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       const data = await res.json()
-      console.log('Voxels:', data.voxels)
-      console.log('Voxel shape:', [
-        data.voxels.length,
-        data.voxels[0]?.length,
-        data.voxels[0]?.[0]?.length,
-        data.voxels[0]?.[0]?.[0]?.length,
-      ])
+      console.log('Preds:', data.preds)
+      console.log('Shape:', [data.n_timesteps, data.n_vertices])
       setResult(data)
     } catch (err) {
       setError(err.message || 'Analysis failed.')
