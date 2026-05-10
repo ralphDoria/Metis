@@ -1,0 +1,125 @@
+.metis-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: var(--metis-radius-lg);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid var(--metis-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.metis-metric__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.metis-metric__title {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--metis-text-faint);
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.metis-metric__caption {
+  font-size: 13px;
+  color: var(--metis-text-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.metis-metric__value-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.metis-metric__value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.metis-metric__delta {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.metis-metric__delta--good {
+  color: #6ee7b7;
+  background: rgba(110, 231, 183, 0.10);
+  border: 1px solid rgba(110, 231, 183, 0.25);
+}
+.metis-metric__delta--warn {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.10);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.metis-metric__spark {
+  width: 100%;
+  height: 56px;
+  display: block;
+}
+
+.metis-metric__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metis-metric__bar-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.metis-metric__bar-label {
+  color: var(--metis-text-soft);
+  letter-spacing: 0.02em;
+}
+
+.metis-metric__bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  display: block;
+}
+
+.metis-metric__bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a06bf0, #8a2be2);
+  box-shadow: 0 0 12px rgba(160, 107, 240, 0.5);
+  transition: width 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.metis-metric__bar-fill--amber {
+  background: linear-gradient(90deg, #ff8c00, #f472b6);
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.45);
+}
+
+.metis-metric__bar-fill--rose {
+  background: linear-gradient(90deg, #f472b6, #a06bf0);
+}
+
+.metis-metric__bar-value {
+  text-align: right;
+  color: var(--metis-text);
+  font-variant-numeric: tabular-nums;
+}

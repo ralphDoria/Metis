@@ -1,0 +1,64 @@
+.metis-nebula {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #0c0420 0%, transparent 60%),
+    linear-gradient(180deg, #050505 0%, #07050d 60%, #050308 100%);
+}
+
+.metis-nebula__layer {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  animation: metis-drift 22s ease-in-out infinite;
+}
+
+.metis-nebula__layer--violet {
+  width: 60vw;
+  height: 60vw;
+  top: -10vw;
+  left: -10vw;
+  background: radial-gradient(circle, rgba(138, 43, 226, 0.55) 0%, rgba(91, 26, 166, 0.18) 45%, transparent 70%);
+}
+
+.metis-nebula__layer--rose {
+  width: 55vw;
+  height: 55vw;
+  bottom: -12vw;
+  right: -10vw;
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.30) 0%, rgba(138, 43, 226, 0.12) 50%, transparent 75%);
+  animation-duration: 28s;
+  animation-delay: -6s;
+}
+
+.metis-nebula__layer--amber {
+  width: 40vw;
+  height: 40vw;
+  top: 50%;
+  left: 60%;
+  background: radial-gradient(circle, rgba(255, 140, 0, 0.18) 0%, rgba(244, 114, 182, 0.08) 50%, transparent 75%);
+  animation-duration: 32s;
+  animation-delay: -12s;
+  opacity: 0.4;
+}
+
+.metis-nebula__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, #000 30%, transparent 80%);
+}
+
+.metis-nebula__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
+}

@@ -1,19 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Metis — Nebula palette */
+  --metis-void: #050505;
+  --metis-void-deep: #020203;
+  --metis-ink: #0b0b12;
+  --metis-haze: rgba(255, 255, 255, 0.04);
+  --metis-glass: rgba(255, 255, 255, 0.06);
+  --metis-glass-strong: rgba(255, 255, 255, 0.10);
+  --metis-border: rgba(255, 255, 255, 0.08);
+  --metis-border-strong: rgba(255, 255, 255, 0.14);
+
+  --metis-amethyst: #8a2be2;
+  --metis-amethyst-soft: #a06bf0;
+  --metis-amethyst-deep: #5b1aa6;
+
+  --metis-amber: #ff8c00;
+  --metis-rose: #f472b6;
+
+  --metis-text: #f5f3ff;
+  --metis-text-soft: rgba(245, 243, 255, 0.72);
+  --metis-text-faint: rgba(245, 243, 255, 0.45);
+
+  --metis-good: #6ee7b7;
+  --metis-warn: #fbbf24;
+  --metis-danger: #f87171;
+
+  /* Geometry */
+  --metis-radius-sm: 12px;
+  --metis-radius-md: 18px;
+  --metis-radius-lg: 24px;
+  --metis-radius-xl: 32px;
+
+  /* Glow shadows */
+  --metis-glow-amethyst:
+    0 0 0 1px rgba(138, 43, 226, 0.35),
+    0 18px 60px -12px rgba(138, 43, 226, 0.55),
+    0 4px 24px -6px rgba(160, 107, 240, 0.35);
+  --metis-glow-amber:
+    0 0 0 1px rgba(255, 140, 0, 0.35),
+    0 18px 60px -12px rgba(255, 140, 0, 0.4);
+  --metis-shadow-soft:
+    0 24px 60px -20px rgba(0, 0, 0, 0.6),
+    0 6px 24px -10px rgba(0, 0, 0, 0.4);
+
+  font-family:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
-  line-height: 1.5;
-  color: #0a0a0a;
-  background: #fff;
+  line-height: 1.55;
+  color: var(--metis-text);
+  background: var(--metis-void);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01', 'cv11';
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
   margin: 0;
-  background: #fff;
+  padding: 0;
+  background: var(--metis-void);
+  color: var(--metis-text);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Subtle film grain over the whole page */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.5;
+  mix-blend-mode: screen;
+}
+
+::selection {
+  background: rgba(138, 43, 226, 0.45);
+  color: #fff;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: var(--metis-amethyst-soft);
+  text-decoration: none;
+}
+
+@keyframes metis-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.04); opacity: 0.92; }
+}
+
+@keyframes metis-drift {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50%  { transform: translate3d(2%, -1%, 0) rotate(0.6deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+@keyframes metis-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes metis-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

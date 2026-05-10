@@ -1,0 +1,52 @@
+.metis-brain {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.metis-brain svg {
+  display: block;
+  filter: drop-shadow(0 0 18px rgba(138, 43, 226, 0.18));
+}
+
+.metis-brain__pathway,
+.metis-brain__amygdala {
+  opacity: 0.18;
+  transition: opacity 0.6s ease;
+}
+
+.metis-brain__pathway.is-on,
+.metis-brain__amygdala.is-on {
+  opacity: 1;
+  animation: metis-pulse 2.4s ease-in-out infinite;
+}
+
+.metis-brain__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.metis-brain__chip {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 140, 0, 0.4);
+  background: rgba(255, 140, 0, 0.08);
+  color: #ffd9a8;
+  font-weight: 600;
+}
+
+.metis-brain__chip--warn {
+  border-color: rgba(255, 140, 0, 0.55);
+  background: linear-gradient(180deg,
+    rgba(255, 140, 0, 0.18) 0%,
+    rgba(244, 114, 182, 0.10) 100%);
+  color: #ffd9a8;
+  box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.25), 0 6px 18px -6px rgba(255, 140, 0, 0.5);
+}

@@ -1,0 +1,52 @@
+.metis-ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  filter: drop-shadow(0 12px 40px rgba(138, 43, 226, 0.35));
+  transition: filter 0.4s ease;
+}
+
+.metis-ring--transition {
+  filter: drop-shadow(0 12px 40px rgba(244, 114, 182, 0.35));
+}
+
+.metis-ring--amber {
+  filter: drop-shadow(0 12px 40px rgba(255, 140, 0, 0.45));
+}
+
+.metis-ring__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.metis-ring__primary {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.metis-ring__secondary {
+  font-size: 13px;
+  color: var(--metis-text-soft);
+  font-weight: 500;
+}
+
+.metis-ring__label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--metis-text-faint);
+  margin-top: 2px;
+  font-weight: 500;
+}

@@ -1,0 +1,135 @@
+.metis-orb {
+  position: relative;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  perspective: 1200px;
+  transform: translate3d(var(--orb-tx), var(--orb-ty), 0);
+  transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1);
+  filter: saturate(1.05);
+}
+
+.metis-orb__halo {
+  position: absolute;
+  inset: -25%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(138, 43, 226, calc(0.55 * var(--orb-intensity))) 0%,
+      rgba(138, 43, 226, calc(0.32 * var(--orb-intensity))) 25%,
+      rgba(138, 43, 226, 0.05) 55%,
+      transparent 70%
+    );
+  filter: blur(28px);
+  animation: metis-pulse 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.metis-orb--amber .metis-orb__halo {
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255, 140, 0, calc(0.55 * var(--orb-intensity))) 0%,
+      rgba(244, 114, 182, calc(0.30 * var(--orb-intensity))) 30%,
+      rgba(255, 140, 0, 0.05) 60%,
+      transparent 75%
+    );
+}
+
+.metis-orb__shell {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--orb-rot-x)) rotateY(var(--orb-rot-y));
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+  background:
+    radial-gradient(circle at 32% 30%,
+      #d6b8ff 0%,
+      #8a2be2 22%,
+      #3b0d7a 55%,
+      #0f0420 85%
+    );
+  box-shadow:
+    inset -28px -36px 80px rgba(0, 0, 0, 0.55),
+    inset 18px 24px 60px rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 30px 80px -20px rgba(138, 43, 226, 0.65),
+    0 8px 30px -10px rgba(160, 107, 240, 0.35);
+  overflow: hidden;
+}
+
+.metis-orb--amber .metis-orb__shell {
+  background:
+    radial-gradient(circle at 32% 30%,
+      #ffd9a8 0%,
+      #ff8c00 22%,
+      #c0376e 55%,
+      #2a0512 85%
+    );
+  box-shadow:
+    inset -28px -36px 80px rgba(0, 0, 0, 0.55),
+    inset 18px 24px 60px rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 30px 80px -20px rgba(255, 140, 0, 0.6),
+    0 8px 30px -10px rgba(244, 114, 182, 0.4);
+}
+
+.metis-orb__core {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(214, 184, 255, 0.0) 55%
+    );
+  filter: blur(8px);
+  animation: metis-pulse 3.6s ease-in-out infinite;
+}
+
+.metis-orb__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  pointer-events: none;
+}
+.metis-orb__ring--a { inset: -6%;  border-color: rgba(160, 107, 240, 0.18); }
+.metis-orb__ring--b { inset: -14%; border-color: rgba(160, 107, 240, 0.10); }
+.metis-orb__ring--c { inset: -22%; border-color: rgba(160, 107, 240, 0.06); }
+
+.metis-orb--amber .metis-orb__ring--a { border-color: rgba(255, 140, 0, 0.20); }
+.metis-orb--amber .metis-orb__ring--b { border-color: rgba(244, 114, 182, 0.14); }
+.metis-orb--amber .metis-orb__ring--c { border-color: rgba(244, 114, 182, 0.08); }
+
+.metis-orb__sheen {
+  position: absolute;
+  top: 8%;
+  left: 14%;
+  width: 36%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 30% 30%,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0) 70%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.metis-orb__shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -10%;
+  height: 18%;
+  background: radial-gradient(ellipse at center,
+    rgba(138, 43, 226, 0.45) 0%,
+    transparent 70%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.metis-orb--amber .metis-orb__shadow {
+  background: radial-gradient(ellipse at center,
+    rgba(255, 140, 0, 0.4) 0%,
+    transparent 70%);
+}
