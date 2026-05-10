@@ -128,7 +128,46 @@ export const OVERLAY_CSS = `
   pointer-events: none;
 }
 .metis-brainview__controls {
-  display: none; /* compact in-overlay: skip slider chrome */
+  position: absolute;
+  left: 8px; right: 8px; bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.45);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.06);
+  pointer-events: auto;
+}
+.metis-brainview__slider {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 2px;
+  background: linear-gradient(90deg, #a06bf0, #f472b6, #ff8c00);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+.metis-brainview__slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(160,107,240,0.6);
+  cursor: grab;
+}
+.metis-brainview__slider::-moz-range-thumb {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(160,107,240,0.6);
+  cursor: grab;
+}
+.metis-brainview__time {
+  font-size: 10px;
+  color: rgba(245,243,255,0.6);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .metis-brainview__legend { display: none; }
 .metis-error { color: #fecaca; font-size: 11px; padding: 6px; }

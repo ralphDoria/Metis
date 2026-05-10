@@ -1,126 +1,129 @@
-// Top-level overlay component. Listens for runtime messages from the SW and
-// renders the brain panel + status + card stack.
+// Top-level overlay component. Drives the fake real-time demo:
 //
-// Message contract:
-//   - `demo_result` { result }: full /demo response. We split the response
-//     into a verdict card + per-pattern cards and stagger them in.
-//   - `reset_demo`: wipe local state.
-//   - `verdict` / `verdict_failed`: legacy live-recording hooks; routed into
-//     the same card stack so this overlay still works if recording is
-//     re-enabled.
-//   - `loop_status`: live status passthrough.
+//   1. `run_demo` arrives → cards empty, brain empty (no data), status flips
+//      to "analyzing" with the yellow pulse.
+//   2. Wait a random 5–10 s, then load the brain payload (one-shot — never
+//      re-rendered for the lifetime of the page).
+//   3. After the brain reveal, schedule a recurring 5–10 s timer that pushes
+//      one randomly-generated card onto the stack, capped at MAX_CARDS. The
+//      bottom (oldest) card falls off when the cap is reached.
+//   4. `reset_demo` clears the card stack only — brain stays loaded, the
+//      streaming timer keeps firing.
+//   5. Re-clicking "Run demo" while the simulation is already running is a
+//      no-op (matches the "don't re-render the brain" rule).
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Msg, ProcessResponse } from '../shared/types'
+import type { Msg, ScoreLabel } from '../shared/types'
 import { BrainPanel } from './BrainPanel'
 import { CardList, MAX_CARDS, type Card } from './CardList'
 import { StatusBadge, type LoopStatus } from './StatusBadge'
+import { pickPattern } from './patterns'
 
-const STAGGER_MS = 700
+// Range used for both the initial brain-reveal delay and the inter-card delay.
+const TICK_MIN_MS = 10_000
+const TICK_MAX_MS = 20_000
+
+function randMs(): number {
+  return TICK_MIN_MS + Math.floor(Math.random() * (TICK_MAX_MS - TICK_MIN_MS))
+}
 
 function clipId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function fanOut(result: ProcessResponse): Card[] {
-  const cards: Card[] = []
-  cards.push({
+function scoreToLabel(score: number): ScoreLabel {
+  if (score < 0.3) return 'low'
+  if (score < 0.55) return 'average'
+  if (score < 0.8) return 'elevated'
+  return 'high'
+}
+
+function generateCard(): Card {
+  const pattern = pickPattern()
+  // Confidence skews high — the model "is sure" most of the time.
+  const confidence = 0.55 + Math.random() * 0.4
+  // Addictiveness score: ~U(0.15, 0.95) so we hit every label tier eventually.
+  const score = 0.15 + Math.random() * 0.8
+  const label = scoreToLabel(score)
+  // Cards with high score visually flag as "skipped" so the action chip varies
+  // — we're not actually skipping anything in demo mode.
+  const action: Card['action'] = label === 'high' ? 'skipped' : 'watched'
+  return {
     id: clipId(),
-    label: result.label,
-    score: result.score,
-    primaryPattern: 'Overall verdict',
-    feedback: result.feedback,
-    action: 'watched',
+    label,
+    score,
+    primaryPattern: pattern.label,
+    feedback: `${pattern.description} (confidence ${(confidence * 100).toFixed(0)}%)`,
+    action,
     at: Date.now(),
-  })
-  for (const p of result.patterns ?? []) {
-    cards.push({
-      id: clipId(),
-      label: result.label,
-      score: p.confidence,
-      primaryPattern: p.label,
-      feedback: p.description,
-      action: 'watched',
-      at: Date.now(),
-    })
   }
-  return cards
 }
 
 export function App() {
   const [cards, setCards] = useState<Card[]>([])
   const [brain, setBrain] = useState<Record<string, unknown> | null>(null)
   const [status, setStatus] = useState<LoopStatus>('idle')
-  // Pending stagger timers — kept in a ref so re-renders don't drop them and
-  // so a `reset_demo` can cancel everything cleanly.
-  const timersRef = useRef<number[]>([])
 
-  const clearTimers = () => {
-    for (const t of timersRef.current) window.clearTimeout(t)
-    timersRef.current = []
+  // Refs so re-renders don't drop pending timers and we can guard against
+  // re-entrant `run_demo` clicks.
+  const simRunningRef = useRef(false)
+  const tickTimerRef = useRef<number | null>(null)
+  const revealTimerRef = useRef<number | null>(null)
+
+  const stopTimers = () => {
+    if (tickTimerRef.current !== null) {
+      window.clearTimeout(tickTimerRef.current)
+      tickTimerRef.current = null
+    }
+    if (revealTimerRef.current !== null) {
+      window.clearTimeout(revealTimerRef.current)
+      revealTimerRef.current = null
+    }
   }
 
   useEffect(() => {
+    function scheduleNextCard(): void {
+      const ms = randMs()
+      tickTimerRef.current = window.setTimeout(() => {
+        // Newest on top; cap at MAX_CARDS so the oldest (bottom) falls off.
+        setCards((prev) => [generateCard(), ...prev].slice(0, MAX_CARDS))
+        scheduleNextCard()
+      }, ms)
+    }
+
     const onMessage = (msg: Msg) => {
       if (msg.kind === 'demo_result') {
-        // Wipe before replay so the brain remounts and cards animate fresh.
-        clearTimers()
+        // Re-clicks while simulation is already running are intentional no-ops.
+        if (simRunningRef.current) return
+        simRunningRef.current = true
+
         setCards([])
         setBrain(null)
         setStatus('analyzing')
 
-        const fanned = fanOut(msg.result)
-        // Brain payload becomes the *first* visible artifact (so the user sees
-        // it spinning while cards stream in).
-        const brainTimer = window.setTimeout(() => {
+        // Brain reveal after a random 5–10 s wait. After this, we never touch
+        // `brain` state again for the lifetime of the page — even on reset.
+        const revealMs = randMs()
+        revealTimerRef.current = window.setTimeout(() => {
           setBrain((msg.result.brain as Record<string, unknown>) ?? null)
           setStatus('recording')
-        }, 200)
-        timersRef.current.push(brainTimer)
-
-        fanned.forEach((card, i) => {
-          const t = window.setTimeout(
-            () => {
-              setCards((prev) => [card, ...prev].slice(0, MAX_CARDS))
-              if (i === fanned.length - 1) setStatus('analyzing')
-            },
-            400 + i * STAGGER_MS,
-          )
-          timersRef.current.push(t)
-        })
-        // After last card, drop back to idle.
-        const tailTimer = window.setTimeout(
-          () => setStatus('idle'),
-          400 + fanned.length * STAGGER_MS + 800,
-        )
-        timersRef.current.push(tailTimer)
+          scheduleNextCard()
+        }, revealMs)
       } else if (msg.kind === 'reset_demo') {
-        clearTimers()
+        // Clear cards only; brain stays. Streaming timer keeps firing so new
+        // cards stream in on top of the empty list.
         setCards([])
-        setBrain(null)
-        setStatus('idle')
       } else if (msg.kind === 'verdict') {
-        const card: Card = {
-          id: msg.clipId || clipId(),
-          label: msg.result.label,
-          score: msg.result.score,
-          primaryPattern: msg.result.patterns?.[0]?.label ?? 'Captured response',
-          feedback: msg.result.feedback,
-          action: msg.action,
-          at: Date.now(),
-        }
-        setCards((prev) => [card, ...prev].slice(0, MAX_CARDS))
-      } else if (msg.kind === 'verdict_failed') {
         setCards((prev) =>
           [
             {
               id: msg.clipId || clipId(),
-              label: 'low' as const,
-              score: 0,
-              primaryPattern: 'Analysis failed',
-              feedback: msg.error,
-              action: 'failed' as const,
+              label: msg.result.label,
+              score: msg.result.score,
+              primaryPattern: msg.result.patterns?.[0]?.label ?? 'Captured response',
+              feedback: msg.result.feedback,
+              action: msg.action,
               at: Date.now(),
             },
             ...prev,
@@ -134,11 +137,14 @@ export function App() {
     chrome.runtime.onMessage.addListener(onMessage)
     return () => {
       chrome.runtime.onMessage.removeListener(onMessage)
-      clearTimers()
+      stopTimers()
     }
   }, [])
 
-  const visible = useMemo(() => cards.length > 0 || brain !== null || status !== 'idle', [cards, brain, status])
+  const visible = useMemo(
+    () => cards.length > 0 || brain !== null || status !== 'idle',
+    [cards, brain, status],
+  )
 
   return (
     <div className={`metis-overlay__panel${visible ? ' metis-overlay__panel--show' : ''}`}>

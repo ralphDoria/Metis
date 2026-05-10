@@ -1,9 +1,9 @@
-// Stacked insight cards rendered inside the in-page overlay. Newest on top,
-// capped at MAX_CARDS so unlimited demo replays don't blow out memory.
+// Stacked insight cards rendered inside the in-page overlay. Newest on top.
+// Cap at MAX_CARDS — when full, the bottom (oldest) card is dropped.
 
 import type { ScoreLabel } from '../shared/types'
 
-export const MAX_CARDS = 20
+export const MAX_CARDS = 10
 
 export interface Card {
   id: string
@@ -17,9 +17,7 @@ export interface Card {
 
 export function CardList({ cards }: { cards: Card[] }) {
   if (cards.length === 0) {
-    return (
-      <div className="metis-overlay__empty">Click “Run demo” in the popup to begin.</div>
-    )
+    return <div className="metis-overlay__empty">Waiting for first reading…</div>
   }
   return (
     <div className="metis-overlay__list">
