@@ -11,12 +11,17 @@ export function observeVideos(
 ): VideoObserverHandle {
   const tracked = new WeakSet<HTMLVideoElement>()
 
+  // Has this video ever been seen by either observer? Used to suppress the
+  // initial "leaving" callback that fires before a video has truly entered.
+  const seen = new WeakSet<HTMLVideoElement>()
+
   const activeIO = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
         const v = e.target as HTMLVideoElement
         if (e.intersectionRatio >= 0.6) {
           markActive(v)
+          seen.add(v)
           onEvent('active', v)
         } else if (e.intersectionRatio < 0.2 && v.dataset.metisActive === '1') {
           v.removeAttribute('data-metis-active')
@@ -31,7 +36,15 @@ export function observeVideos(
     (entries) => {
       for (const e of entries) {
         const v = e.target as HTMLVideoElement
-        if (e.isIntersecting) onEvent('prefetch', v)
+        if (e.isIntersecting) {
+          seen.add(v)
+          onEvent('prefetch', v)
+        } else if (seen.has(v) && v.dataset.metisActive !== '1') {
+          // The video left our wide prefetch band without becoming active —
+          // user scrolled past it. activeIO won't fire 'lost' here, so emit
+          // it from this observer instead.
+          onEvent('lost', v)
+        }
       }
     },
     { rootMargin: '200% 0px 200% 0px', threshold: 0.01 },
@@ -64,6 +77,9 @@ export function observeVideos(
       m.addedNodes.forEach((n) => {
         if (n instanceof HTMLVideoElement) track(n)
         else if (n instanceof Element) n.querySelectorAll<HTMLVideoElement>('video').forEach(track)
+      })
+      m.removedNodes.forEach((n) => {
+        if (n instanceof HTMLVideoElement && tracked.has(n)) onEvent('lost', n)
       })
     }
   })

@@ -79,6 +79,7 @@ export type Msg =
   | { kind: 'verdict_failed'; videoKey: string; error: string }
   | { kind: 'mark_skipped'; videoKey: string }
   | { kind: 'mark_watched'; videoKey: string }
+  | { kind: 'cancel_capture'; videoKey: string; reason: 'user_skipped' | 'tab_hidden' | 'navigation' }
   | { kind: 'settings_get' }
   | { kind: 'settings_set'; patch: Partial<Settings> }
   | { kind: 'session_get' }

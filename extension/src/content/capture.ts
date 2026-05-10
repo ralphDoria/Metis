@@ -10,6 +10,12 @@ const MIME_CANDIDATES = [
   'video/webm',
 ]
 
+// Hard cap: only the first N seconds of any reel get analyzed. Anything past
+// this is treated as "too late" — the user is already settled into the loop
+// and the verdict can no longer drive a useful intervention.
+export const FIRST_N_SECONDS = 10
+const MIN_CAPTURE_MS = 1500
+
 function pickMime(): string {
   for (const m of MIME_CANDIDATES) {
     if (MediaRecorder.isTypeSupported(m)) return m
@@ -17,13 +23,34 @@ function pickMime(): string {
   return 'video/webm'
 }
 
-export async function captureChunk(
-  videoEl: HTMLVideoElement,
-  ms = 4500,
-): Promise<CaptureResult> {
+export async function captureChunk(videoEl: HTMLVideoElement): Promise<CaptureResult> {
   const stream =
     (videoEl as HTMLVideoElement & { captureStream?: () => MediaStream }).captureStream?.()
   if (!stream) throw new Error('capturestream_unavailable')
+
+  // Where in the reel are we? `currentTime` may be NaN before metadata loads.
+  const startedAt = Number.isFinite(videoEl.currentTime) ? videoEl.currentTime : 0
+  if (startedAt >= FIRST_N_SECONDS) {
+    throw new Error('past_first_window')
+  }
+
+  // For prefetched (paused) reels we can rewind to start so we always capture
+  // the very first seconds. For active reels we never seek — yanking the
+  // playhead back would be an obvious UI glitch.
+  const wasPaused = videoEl.paused
+  let captureStartTime = startedAt
+  if (wasPaused && startedAt > 0.5) {
+    try {
+      videoEl.currentTime = 0
+      captureStartTime = 0
+    } catch {
+      // seek may fail mid-load; fall through with whatever currentTime is.
+    }
+  }
+
+  const remainingMs = Math.max(0, (FIRST_N_SECONDS - captureStartTime) * 1000)
+  const ms = Math.min(FIRST_N_SECONDS * 1000, remainingMs)
+  if (ms < MIN_CAPTURE_MS) throw new Error('first_window_too_short')
 
   const mime = pickMime()
   const rec = new MediaRecorder(stream, { mimeType: mime })
@@ -35,13 +62,12 @@ export async function captureChunk(
   const t0 = performance.now()
   rec.start()
 
-  const wasPaused = videoEl.paused
   if (wasPaused) {
     videoEl.muted = true
     try {
       await videoEl.play()
     } catch {
-      // ignored: autoplay may be blocked; recorder still gets prior frames
+      // ignored: autoplay may be blocked; recorder still receives any frames.
     }
   }
 
@@ -55,8 +81,18 @@ export async function captureChunk(
     }
     videoEl.addEventListener('ended', onEnded, { once: true })
   })
+  // Stop early if playhead reaches the first-N-seconds boundary, even if the
+  // wall-clock timer hasn't expired (covers fast playback or seek-aheads).
+  const reachedWindow = new Promise<void>((resolve) => {
+    const tick = () => {
+      if (videoEl.currentTime >= FIRST_N_SECONDS) return resolve()
+      if (rec.state === 'inactive') return resolve()
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
   const timer = new Promise<void>((resolve) => setTimeout(resolve, ms))
-  await Promise.race([timer, ended])
+  await Promise.race([timer, ended, reachedWindow])
 
   if (rec.state !== 'inactive') rec.stop()
   await stopped

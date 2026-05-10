@@ -1,4 +1,4 @@
-import { postProcessWithRetry } from './shared/api'
+import { cancelProcess, postProcessWithRetry } from './shared/api'
 import { getSettings, isPaused, setSettings } from './shared/settings'
 import { getSession, recordError, recordVideo, resetSession } from './shared/session'
 import type { Msg, ProcessedVideo } from './shared/types'
@@ -6,6 +6,13 @@ import type { Msg, ProcessedVideo } from './shared/types'
 const MAX_INFLIGHT = 2
 let inflight = 0
 const queue: Array<() => void> = []
+
+interface InflightJob {
+  jobId: string
+  abort: AbortController
+}
+
+const inflightByVideo = new Map<string, InflightJob>()
 
 async function acquire(): Promise<() => void> {
   if (inflight < MAX_INFLIGHT) {
@@ -28,6 +35,14 @@ async function acquire(): Promise<() => void> {
   })
 }
 
+function makeJobId(): string {
+  // Crypto.randomUUID is available in MV3 service workers.
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 async function handleCapture(
   msg: Extract<Msg, { kind: 'capture_done' }>,
   sender: chrome.runtime.MessageSender,
@@ -48,9 +63,13 @@ async function handleCapture(
   await recordVideo(video)
 
   const release = await acquire()
+  const jobId = makeJobId()
+  const abort = new AbortController()
+  inflightByVideo.set(msg.videoKey, { jobId, abort })
+
   try {
     const blob = new Blob([msg.bytes], { type: msg.mime || 'video/webm' })
-    const result = await postProcessWithRetry(blob)
+    const result = await postProcessWithRetry(blob, { jobId, signal: abort.signal })
     const primary = result.patterns?.[0]
     await recordVideo({
       ...video,
@@ -64,18 +83,29 @@ async function handleCapture(
       const verdict: Msg = { kind: 'verdict', videoKey: msg.videoKey, result }
       chrome.tabs.sendMessage(tabId, verdict).catch(() => {})
     }
-
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e)
-    await recordError(message)
-    await recordVideo({ ...video, action: 'failed' })
-    if (tabId !== undefined) {
+    const aborted = abort.signal.aborted
+    const message = aborted ? 'cancelled_by_user' : e instanceof Error ? e.message : String(e)
+    if (!aborted) await recordError(message)
+    await recordVideo({ ...video, action: aborted ? 'watched' : 'failed' })
+    if (tabId !== undefined && !aborted) {
       const failed: Msg = { kind: 'verdict_failed', videoKey: msg.videoKey, error: message }
       chrome.tabs.sendMessage(tabId, failed).catch(() => {})
     }
   } finally {
+    inflightByVideo.delete(msg.videoKey)
     release()
   }
+}
+
+function cancelInflight(videoKey: string): boolean {
+  const job = inflightByVideo.get(videoKey)
+  if (!job) return false
+  inflightByVideo.delete(videoKey)
+  job.abort.abort()
+  // Fire-and-forget; the server-side endpoint deregisters the FunctionCall.
+  void cancelProcess(job.jobId)
+  return true
 }
 
 chrome.runtime.onMessage.addListener((msg: Msg, sender, sendResponse) => {
@@ -89,6 +119,11 @@ chrome.runtime.onMessage.addListener((msg: Msg, sender, sendResponse) => {
           await handleCapture(msg, sender)
           sendResponse({ ok: true })
           return
+        case 'cancel_capture': {
+          const ok = cancelInflight(msg.videoKey)
+          sendResponse({ ok })
+          return
+        }
         case 'mark_skipped': {
           const session = await getSession()
           const v = session.processedVideos.find((x) => x.videoKey === msg.videoKey)

@@ -65,7 +65,7 @@ async function maybeStartCapture(video: HTMLVideoElement): Promise<void> {
     if (video.dataset.metisActive === '1') {
       setOverlay({ status: 'analyzing' })
     }
-    const { blob, durationSeconds, mime } = await captureChunk(video, 4500)
+    const { blob, durationSeconds, mime } = await captureChunk(video)
     if (durationSeconds < MIN_DURATION_FOR_CAPTURE && !blob.size) return
     const bytes = await blob.arrayBuffer()
     const message: Msg = {
@@ -164,7 +164,16 @@ function init() {
         maybeStartCapture(video)
       }
     } else if (kind === 'lost') {
-      // Keep verdict cache for back-scroll, but clear overlay.
+      // The user scrolled past this reel. If we have an inflight analysis
+      // for it that we never showed a verdict for, cancel the Modal job.
+      const key = videoKey(video)
+      if (!verdictCache.has(key)) {
+        chrome.runtime.sendMessage({
+          kind: 'cancel_capture',
+          videoKey: key,
+          reason: 'user_skipped',
+        } satisfies Msg)
+      }
       hideOverlay()
     }
   })
