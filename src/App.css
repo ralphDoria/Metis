@@ -186,17 +186,21 @@
 /* The orb stage */
 .metis-hero__stage {
   position: relative;
-  aspect-ratio: 1 / 1;
   width: 100%;
   max-width: 520px;
   justify-self: center;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .metis-hero__orb {
   position: relative;
   z-index: 2;
+  width: 480px;
+  height: 480px;
+  max-width: 100%;
   animation: metis-fade-up 1s 0.1s ease both;
 }
 
@@ -224,6 +228,12 @@
   gap: 14px;
   margin-top: 12px;
   animation: metis-fade-up 0.9s 0.2s ease both;
+}
+
+/* Demo button sits directly under the brain inside the stage column. */
+.metis-hero__demo {
+  display: flex;
+  justify-content: center;
 }
 
 @media (max-width: 960px) {
@@ -1090,4 +1100,20 @@
   pointer-events: none;
   text-align: center;
   padding: 0 24px;
+}
+
+/* Compact mode: drop the section chrome so the renderer fills its parent
+   transparently (e.g. when used as the hero "blob" on the lander). */
+.metis-brainview--compact {
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.metis-brainview__canvas-wrap--compact {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }

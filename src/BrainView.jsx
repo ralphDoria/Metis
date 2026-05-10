@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { API_BASE } from './lib/api.js'
 
-const API_BASE = 'https://metis.mnkjoshi.ca'
 const N_VERTS_PER_HEMI = 10242
 const HEMI_BYTES = N_VERTS_PER_HEMI * 3
 const FRAME_BYTES = HEMI_BYTES * 2
@@ -43,7 +43,7 @@ function applyLambert(mesh) {
   mesh.geometry.computeVertexNormals()
 }
 
-export default function BrainView({ brain }) {
+export default function BrainView({ brain, compact = false, className = '' }) {
   const containerRef = useRef(null)
   const stateRef = useRef(null) // { renderer, scene, camera, controls, lh, rh, colors, ... }
   const scrubbingRef = useRef(false) // user actively dragging slider
@@ -324,17 +324,31 @@ export default function BrainView({ brain }) {
     }
   }, [brain])
 
+  const rootClass = [
+    'metis-brainview',
+    compact && 'metis-brainview--compact',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const canvasClass = [
+    'metis-brainview__canvas-wrap',
+    compact && 'metis-brainview__canvas-wrap--compact',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className="metis-brainview">
-      <div ref={containerRef} className="metis-brainview__canvas-wrap">
-        {!hasData && !error && (
+    <div className={rootClass}>
+      <div ref={containerRef} className={canvasClass}>
+        {!compact && !hasData && !error && (
           <span className="metis-brainview__empty">
             Awaiting neural data
           </span>
         )}
       </div>
-      {error && <p className="metis-error">{error}</p>}
-      {hasData && (
+      {!compact && error && <p className="metis-error">{error}</p>}
+      {!compact && hasData && (
         <div className="metis-brainview__controls">
           <input
             type="range"
@@ -360,7 +374,7 @@ export default function BrainView({ brain }) {
           </span>
         </div>
       )}
-      {hasData && (
+      {!compact && hasData && (
         <div className="metis-brainview__legend">
           <span className="metis-brainview__legend-bar" />
           <span>low → high</span>
