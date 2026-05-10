@@ -1,15 +1,14 @@
-import { lazy, Suspense, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
-import Orb from '../components/metis-core/Orb.jsx'
+import BrainView from '../BrainView.jsx'
 import GlassButton from '../components/metis-core/GlassButton.jsx'
+import { API_BASE } from '../lib/api.js'
 import { impactFromResult } from '../lib/impact.js'
 import { easeOut, fadeUp, slowStagger, stagger } from '../lib/motion.js'
-import '../components/metis-core/Orb3D.css'
 
-const Orb3D = lazy(() => import('../components/metis-core/Orb3D.jsx'))
-
-const API_URL = 'https://metis.mnkjoshi.ca/process'
+const API_URL = `${API_BASE}/process`
+const DEMO_URL = `${API_BASE}/demo`
 
 const NOISE_ITEMS = [
   { id: 0,  x: 8,  y: 12, s: 0.9, d: 0.0, sym: '♥' },
@@ -182,8 +181,43 @@ export default function Lander() {
     }
   }
 
-  const tone = parental ? 'amber' : 'amethyst'
-  const orbIntensity = loading ? 1.4 : result && impactFromResult(result).ratio > 0.5 ? 1.2 : 1
+  const [demoLoading, setDemoLoading] = useState(false)
+
+  const onDemo = async () => {
+    setDemoLoading(true)
+    setError('')
+    try {
+      const res = await fetch(DEMO_URL)
+      if (!res.ok) throw new Error(`Demo failed: ${res.status}`)
+      setResult(await res.json())
+    } catch (err) {
+      setError(err.message || 'Demo failed.')
+    } finally {
+      setDemoLoading(false)
+    }
+  }
+
+  // Preload the sample prediction so the hero brain lights up on first paint.
+  // Skip if a result already exists (came back from another page, or was set
+  // by a prior upload). Fetch errors are swallowed — empty grey brain remains.
+  useEffect(() => {
+    if (result) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(DEMO_URL)
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setResult(data)
+      } catch {
+        /* leave brain in empty state */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <section id="top" className="metis-hero">
@@ -198,10 +232,29 @@ export default function Lander() {
         >
           <NoiseField />
           <div className="metis-hero__orb">
-            <Suspense fallback={<Orb size={360} intensity={orbIntensity} tone={tone} />}>
-              <Orb3D size={360} intensity={orbIntensity} tone={tone} />
-            </Suspense>
+            <BrainView brain={result?.brain ?? null} compact />
           </div>
+          <motion.div
+            className="metis-hero__demo"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: easeOut, delay: 0.5 }}
+          >
+            <GlassButton
+              tone="amethyst"
+              size="md"
+              onClick={onDemo}
+              disabled={demoLoading}
+            >
+              {demoLoading ? (
+                <>
+                  <span className="metis-spinner" aria-hidden /> Running demo
+                </>
+              ) : (
+                <>Run sample demo</>
+              )}
+            </GlassButton>
+          </motion.div>
         </motion.div>
 
         <motion.div
