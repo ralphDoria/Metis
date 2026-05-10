@@ -108,7 +108,9 @@ def _persist_session(parsed: dict, brain: dict, video: UploadFile | None, video_
 @app.post("/process")
 async def process(video: UploadFile = File(...), job_id: str | None = None):
     video_bytes = await video.read()
-    fc = Tribe().infer.spawn(video_bytes)
+    # Pass mime hint so Modal can pick the right tempfile suffix; without it
+    # ffmpeg/moviepy mis-sniffs webm→lrc and fails on duration parse.
+    fc = Tribe().infer.spawn(video_bytes, video.content_type)
     if job_id:
         ACTIVE_JOBS[job_id] = fc
     try:

@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Metaware offscreen</title>
+  </head>
+  <body>
+    <!-- Invisible host page. Service worker keeps this alive while a session
+         is active so MediaRecorder + the active MediaStream don't get evicted. -->
+    <script type="module" src="./offscreen.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Metaware (recording test)",
+  "version": "0.0.1",
+  "description": "Records 10s tab clips on Instagram for Metaware neural-response analysis.",
+  "minimum_chrome_version": "126",
+  "permissions": [
+    "tabCapture",
+    "offscreen",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.instagram.com/*",
+    "http://localhost:8000/*",
+    "https://metis.mnkjoshi.ca/*"
+  ],
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["src/content.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Metaware"
+  },
+  "icons": {
+    "16": "public/icon-16.png",
+    "48": "public/icon-48.png",
+    "128": "public/icon-128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/offscreen.html"],
+      "matches": ["https://www.instagram.com/*"]
+    }
+  ]
+}

@@ -28,11 +28,17 @@ Awareness tool for addictive social media. Predicts neural response to scrolled 
 ### Prototype 2 — Chrome extension
 **Goal:** Apply prototype 1 pipeline to live feed.
 
-- Chrome extension watches Instagram/TikTok feed in browser as user scrolls
-- Captures rolling video samples from feed
-- Sends to prototype 1 pipeline
-- Returns session feedback in-extension
-- Depends on: prototype 1 pipeline being functional
+Full spec: see `chrome-extension-implementation.md` — that doc is the source of truth for architecture, manifest, and reuse map. Summary:
+
+- MV3 extension targeting **Instagram Reels** in Chrome 126+ (single-tab session, no TikTok adapter yet).
+- Capture: `chrome.tabCapture.getMediaStreamId()` → `getUserMedia({ chromeMediaSource: 'tab' })` inside an **offscreen document** (service workers can't host `MediaRecorder`).
+- Encoder: `MediaRecorder` with `video/mp4;codecs="avc1.42E01E,mp4a.40.2"` (webm fallback for older Chrome). **Stop + restart per 10s window** — `start(timeslice)` fragments aren't independently playable mp4s.
+- Rolling buffer state machine: `RECORDING → UPLOADING → RECORDING`. One window in flight at a time, no overlap. Trades real-time throughput for in-order results and bounded Modal spend.
+- UI: **side panel** (Chrome 114+) running React. Reuses `src/BrainView.jsx`, `server/parser.py`, `server/brain_export.py`, and the existing `/process` contract unchanged.
+- Component split: service worker (orchestration) ↔ offscreen doc (capture + upload) ↔ side panel (UI), wired via `chrome.runtime.sendMessage`.
+- Bundler: Vite + `@crxjs/vite-plugin` reusing the existing Vite setup. New code lives in `src-extension/`; output to `dist-extension/`, sideloaded via `chrome://extensions` → "Load unpacked".
+- Server delta: add `chrome-extension://*` to CORS in `server/main.py`. Smoke-test MediaRecorder mp4 against `Tribe.infer` before relying on the format. Hosted FastAPI + auth deferred until past demo.
+- Depends on: prototype 1 pipeline being functional.
 
 ## Architecture
 
@@ -74,8 +80,9 @@ React renders feedback
 - Mock surfaces to swap later: `tribe_infer` body in `pipeline/modal_app.py`, `parse_voxels` in `server/main.py`.
 
 ### Prototype 2 path
-- Reuse `pipeline/` and `server/` unchanged.
-- Build a Chrome extension that captures feed video via `chrome.tabCapture` or content script, posts the same `/process` payload to the local server (or hosted version of it).
+- Reuse `pipeline/` and `server/` unchanged except for one CORS edit (`chrome-extension://*` allowed origin).
+- Capture lives in an **offscreen document** driven by `chrome.tabCapture.getMediaStreamId()`; orchestration in the service worker; UI in a side panel — see `chrome-extension-implementation.md` for the full architecture and rolling-buffer state machine.
+- Each 10s `MediaRecorder` mp4 (`avc1.42E01E` + `mp4a.40.2`) is POSTed to the same `/process` endpoint as the upload demo. No new endpoints, no new pipeline code.
 
 ## Run commands
 

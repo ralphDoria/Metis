@@ -73,15 +73,42 @@ class Tribe:
         )
 
     @modal.method()
-    def infer(self, video_bytes: bytes) -> dict:
+    def infer(self, video_bytes: bytes, mime: str | None = None) -> dict:
         """Run TribeV2 on a video. Returns predicted cortex activity.
 
         Output shape: (n_timesteps, 20484) — one prediction per second of
         stimulus, one value per fsaverage5 cortical surface vertex.
+
+        `mime` is a hint from the upload's Content-Type. Bytes are sniffed
+        regardless — if the magic doesn't match a known container we fail
+        loud rather than feeding garbage to ffmpeg, which previously
+        misdetected as `lrc` subtitle and produced a confusing duration error.
         """
         import tempfile
 
-        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+        if len(video_bytes) < 1024:
+            raise ValueError(
+                f"video too small to be a real recording: {len(video_bytes)} bytes "
+                f"(mime={mime!r}, head={video_bytes[:32]!r})"
+            )
+
+        # Sniff first. mp4/iso-bmff: 'ftyp' at offset 4. webm/matroska: EBML
+        # header 0x1a45dfa3 at offset 0.
+        if video_bytes[:4] == b"\x1a\x45\xdf\xa3":
+            suffix = ".webm"
+        elif len(video_bytes) >= 8 and video_bytes[4:8] == b"ftyp":
+            suffix = ".mp4"
+        elif mime and "webm" in mime:
+            suffix = ".webm"
+        elif mime and "mp4" in mime:
+            suffix = ".mp4"
+        else:
+            raise ValueError(
+                f"unrecognized container: mime={mime!r} size={len(video_bytes)} "
+                f"head={video_bytes[:16]!r}"
+            )
+
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
             f.write(video_bytes)
             video_path = f.name
 
@@ -96,9 +123,11 @@ class Tribe:
 
 
 @app.function(image=mock_image)
-def tribe_mock_infer(video_bytes: bytes) -> dict:
+def tribe_mock_infer(video_bytes: bytes, mime: str | None = None) -> dict:
     """Cheap CPU mock. Same return contract as Tribe.infer."""
     import numpy as np
+
+    _ = mime  # accepted for parity with Tribe.infer; mock ignores.
 
     n_timesteps, n_vertices = 20, 20484
     preds = np.random.rand(n_timesteps, n_vertices).astype(np.float32)
