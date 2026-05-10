@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import ProgressRing from '../components/metis-core/ProgressRing.jsx'
@@ -8,10 +9,37 @@ import { Link } from 'react-router-dom'
 import BrainView from '../BrainView.jsx'
 import { impactFromResult } from '../lib/impact.js'
 import { fadeUp, slowStagger, stagger } from '../lib/motion.js'
+import { fetchSessions } from '../lib/api.js'
 
 export default function Dashboard() {
   const { result, parental } = useOutletContext()
   const impact = impactFromResult(result)
+
+  const [sessions, setSessions] = useState([])
+  const [sessionsError, setSessionsError] = useState(null)
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setSessionsLoading(true)
+    fetchSessions(20)
+      .then((rows) => {
+        if (!cancelled) {
+          setSessions(rows)
+          setSessionsError(null)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setSessionsError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setSessionsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+    // Re-fetch when a new result comes in (i.e. after /process completes).
+  }, [result?.session_id])
 
   return (
     <section id="dashboard" className="metis-section">
@@ -236,6 +264,52 @@ export default function Dashboard() {
           )}
         </motion.div>
       )}
+
+      <motion.article
+        className="metis-panel"
+        variants={fadeUp}
+        initial="hidden"
+        animate="show"
+        style={{ marginTop: 32 }}
+      >
+        <header className="metis-panel__row">
+          <div>
+            <h4 className="metis-panel__h4">Session history</h4>
+            <p className="metis-panel__caption">
+              Past sessions stored in Firestore (user: test-user).
+            </p>
+          </div>
+        </header>
+
+        {sessionsLoading && <p className="metis-panel__caption">Loading…</p>}
+        {sessionsError && (
+          <p className="metis-panel__caption" style={{ color: '#f87171' }}>
+            Could not load sessions: {sessionsError}
+          </p>
+        )}
+        {!sessionsLoading && !sessionsError && sessions.length === 0 && (
+          <p className="metis-panel__caption">No sessions yet.</p>
+        )}
+        {sessions.length > 0 && (
+          <ul className="metis-session-list">
+            {sessions.map((s) => (
+              <li key={s.id} className="metis-session-row">
+                <div>
+                  <div className="metis-session-row__title">
+                    {s.video_filename || 'demo session'}
+                  </div>
+                  <div className="metis-session-row__meta">
+                    {s.created_at ? new Date(s.created_at).toLocaleString() : '—'}
+                    {' · '}
+                    {s.high_activation_minutes ?? 0}/{s.total_minutes ?? 0} min high-activation
+                  </div>
+                </div>
+                <div className="metis-session-row__feedback">{s.feedback}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </motion.article>
     </section>
   )
 }

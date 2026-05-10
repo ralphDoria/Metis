@@ -26,6 +26,10 @@ Assets/
 # Generated brain visualization assets (regenerated on server start / per job)
 server/static/
 
+# Service account keys, API tokens
+server/.secrets/
+*.serviceaccount.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

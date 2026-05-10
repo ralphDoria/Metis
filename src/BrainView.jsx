@@ -164,7 +164,19 @@ export default function BrainView({ brain }) {
       window.removeEventListener('resize', onResize)
       window.removeEventListener('pointerup', onWindowPointerUp)
       controls.dispose()
+      // Dispose hemi meshes' geometry + material so the loaded GLB buffers and
+      // vertex-color attributes don't linger on the GPU after unmount.
+      for (const m of [state.lh, state.rh]) {
+        if (!m) continue
+        m.geometry?.dispose()
+        if (Array.isArray(m.material)) m.material.forEach((mm) => mm.dispose())
+        else m.material?.dispose()
+      }
       renderer.dispose()
+      // dispose() flags resources for GC but doesn't release the WebGL context.
+      // Without this, repeated nav (lander ↔ dashboard) leaks contexts until
+      // Chrome's ~16-context cap kicks in and stalls new Canvas creation.
+      renderer.forceContextLoss()
       if (renderer.domElement.parentElement === container) {
         container.removeChild(renderer.domElement)
       }

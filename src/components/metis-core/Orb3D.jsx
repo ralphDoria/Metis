@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Float, MeshDistortMaterial, Sphere } from '@react-three/drei'
 import * as THREE from 'three'
@@ -126,6 +126,21 @@ export default function Orb3D({
   tone = 'amethyst',
   intensity = 1,
 }) {
+  const glRef = useRef(null)
+
+  // The Lander unmounts on every navigation away, so this Canvas is recreated
+  // every time the user returns. r3f's default unmount disposes resources but
+  // doesn't release the WebGL context — without forceContextLoss() they pile
+  // up against Chrome's ~16-context cap and new Canvas creation eventually
+  // stalls. Cleanup runs after r3f's own teardown.
+  useEffect(() => {
+    return () => {
+      const gl = glRef.current
+      if (gl) gl.forceContextLoss?.()
+      glRef.current = null
+    }
+  }, [])
+
   return (
     <div
       className="metis-orb3d"
@@ -135,8 +150,11 @@ export default function Orb3D({
       <Canvas
         camera={{ position: [0, 0, 3.4], fov: 38 }}
         dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         style={{ background: 'transparent' }}
+        onCreated={({ gl }) => {
+          glRef.current = gl
+        }}
       >
         <ambientLight intensity={0.4} />
         <pointLight position={[3, 3, 3]} intensity={1.2} color={tone === 'amber' ? '#ffd9a8' : '#d6b8ff'} />
