@@ -1,0 +1,33 @@
+name: Deploy to metis
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-metis
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /root/Metaware
+            git fetch origin main
+            git reset --hard origin/main
+            if [ -f requirements.txt ]; then
+              /root/.local/bin/uv pip install --python .venv/bin/python -r requirements.txt
+            fi
+            systemctl restart metaware
+            sleep 2
+            curl -fsS http://127.0.0.1:8000/health
