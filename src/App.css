@@ -133,18 +133,152 @@
   padding-top: 32px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  text-align: left;
+}
+
+.result-score {
+  font-size: 18px;
+  color: #0a0a0a;
+  margin: 0;
+}
+
+.result-label {
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  margin-left: 8px;
+  text-transform: capitalize;
+  background: #f0f0f0;
+  color: #6b6b6b;
+}
+
+.result-label-elevated {
+  background: #fff4e0;
+  color: #8a5a00;
+}
+
+.result-label-high {
+  background: #fde2e2;
+  color: #a02020;
 }
 
 .result-feedback {
-  font-size: 17px;
-  color: #0a0a0a;
+  font-size: 14px;
+  color: #6b6b6b;
   margin: 0;
   line-height: 1.5;
 }
 
-.result-stats {
+.demo-section {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.demo-hint {
   font-size: 13px;
   color: #9a9a9a;
   margin: 0;
+}
+
+.demo-button {
+  font-size: 13px;
+  background: none;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 8px 18px;
+  color: #6b6b6b;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.demo-button:hover:not(:disabled) {
+  border-color: #9a9a9a;
+  color: #0a0a0a;
+}
+
+.demo-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.brain-section {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.brain-heading {
+  font-size: 20px;
+  font-weight: 500;
+  color: #0a0a0a;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.brain-canvas-wrap {
+  width: 100%;
+  height: 400px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.brain-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.brain-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brain-slider {
+  flex: 1;
+  accent-color: #0a0a0a;
+}
+
+.brain-time {
+  font-size: 13px;
+  color: #6b6b6b;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.brain-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brain-legend-bar {
+  display: inline-block;
+  width: 120px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    #000000,
+    #4a0a0a,
+    #aa2200,
+    #ff7700,
+    #ffee44,
+    #ffffff
+  );
+}
+
+.brain-legend-text {
+  font-size: 12px;
+  color: #9a9a9a;
 }
