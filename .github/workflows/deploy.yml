@@ -12,6 +12,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: SSH and deploy
         uses: appleboy/ssh-action@v1.2.0
@@ -30,4 +32,4 @@ jobs:
             fi
             systemctl restart metaware
             sleep 2
-            curl -fsS http://127.0.0.1:8000/health
+            curl -fsS --max-time 10 http://127.0.0.1:8000/health
