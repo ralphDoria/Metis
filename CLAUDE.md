@@ -121,6 +121,11 @@ Three processes for full local dev (run in three terminals):
   ```
 - All `python` / `modal` commands must run inside the activated venv. Verify with `which python` → should show `.venv/bin/python`.
 - If conda base auto-activates, run `conda deactivate` before sourcing `.venv`.
+- Backend deps are pinned in `requirements.txt`. Install / sync with:
+  ```bash
+  uv pip install -r requirements.txt
+  ```
+  Update both the file and lockstep when adding a new top-level import.
 
 ## Open items
 

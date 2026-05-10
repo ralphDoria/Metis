@@ -1,0 +1,15 @@
+# Backend deps for server/ + pipeline/.
+# Install: `uv pip install -r requirements.txt` (inside .venv).
+
+fastapi==0.136.1
+uvicorn==0.46.0
+python-multipart==0.0.27
+modal==1.4.2
+
+numpy==2.2.6
+nilearn==0.13.1
+nibabel==5.4.2
+matplotlib==3.10.9
+trimesh==4.12.2
+
+firebase-admin==7.4.0
