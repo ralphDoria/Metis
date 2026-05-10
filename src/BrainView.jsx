@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { API_BASE } from './lib/api.js'
+import { API_BASE as DEFAULT_API_BASE } from './lib/api.js'
 
 const N_VERTS_PER_HEMI = 10242
 const HEMI_BYTES = N_VERTS_PER_HEMI * 3
@@ -43,7 +43,8 @@ function applyLambert(mesh) {
   mesh.geometry.computeVertexNormals()
 }
 
-export default function BrainView({ brain, compact = false, className = '' }) {
+export default function BrainView({ brain, compact = false, className = '', apiBase }) {
+  const API_BASE = apiBase ?? DEFAULT_API_BASE
   const containerRef = useRef(null)
   const stateRef = useRef(null) // { renderer, scene, camera, controls, lh, rh, colors, ... }
   const scrubbingRef = useRef(false) // user actively dragging slider

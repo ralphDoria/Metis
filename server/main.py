@@ -41,12 +41,16 @@ app.add_middleware(
     # Allow: Chrome extension origins, localhost dev, the API host itself,
     # the production frontend (trymetis.web.app), and Firebase Hosting
     # preview channels (trymetis--<channel>-<hash>.web.app).
+    # Instagram is allowed because the extension's content script fetches
+    # /static/*.glb + /static/jobs/*/colors.bin from the host-page origin
+    # (https://www.instagram.com) rather than chrome-extension://.
     allow_origin_regex=(
         r"^(chrome-extension://.+|https?://("
         r"localhost(:\d+)?"
         r"|(.+\.)?mnkjoshi\.ca"
         r"|trymetis\.web\.app"
         r"|trymetis--[a-z0-9-]+\.web\.app"
+        r"|(.+\.)?instagram\.com"
         r"))$"
     ),
     allow_methods=["*"],

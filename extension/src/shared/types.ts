@@ -54,6 +54,7 @@ export interface Settings {
   pausedUntil?: number
 }
 
+// Each entry corresponds to one 10s clip. videoKey is now a per-clip uuid.
 export interface ProcessedVideo {
   videoKey: string
   platform: Platform
@@ -73,15 +74,53 @@ export interface SessionState {
   errors: Array<{ at: number; message: string }>
 }
 
+// New message protocol — sequential capture loop, no cancellation.
 export type Msg =
-  | { kind: 'capture_done'; videoKey: string; bytes: ArrayBuffer; mime: string; platform: Platform; url: string; durationSeconds: number }
-  | { kind: 'verdict'; videoKey: string; result: ProcessResponse }
-  | { kind: 'verdict_failed'; videoKey: string; error: string }
-  | { kind: 'mark_skipped'; videoKey: string }
-  | { kind: 'mark_watched'; videoKey: string }
-  | { kind: 'cancel_capture'; videoKey: string; reason: 'user_skipped' | 'tab_hidden' | 'navigation' }
+  // content → background
+  | { kind: 'start_loop'; platform: Platform; url: string }
+  | { kind: 'stop_loop'; reason: 'navigation' | 'tab_hidden' | 'user_disabled' | 'tab_closed' }
+  // background → offscreen
+  | {
+      kind: 'offscreen_start'
+      streamId: string
+      durationMs: number
+      originTabId: number
+      platform: Platform
+      url: string
+    }
+  | { kind: 'offscreen_stop' }
+  // offscreen → background
+  | {
+      kind: 'recording_result'
+      clipId: string
+      result: ProcessResponse
+      mime: string
+      sizeBytes: number
+      durationSeconds: number
+      originTabId: number
+      platform: Platform
+      url: string
+    }
+  | {
+      kind: 'recording_error'
+      clipId: string
+      message: string
+      originTabId: number
+      platform: Platform
+      url: string
+    }
+  // background → content
+  | { kind: 'verdict'; clipId: string; result: ProcessResponse; action: 'watched' | 'skipped' }
+  | { kind: 'verdict_failed'; clipId: string; error: string }
+  | { kind: 'loop_status'; status: 'recording' | 'analyzing' | 'idle' }
+  // popup ↔ background
   | { kind: 'settings_get' }
   | { kind: 'settings_set'; patch: Partial<Settings> }
   | { kind: 'session_get' }
   | { kind: 'session_reset' }
+  | { kind: 'loop_state_get' }
+  // Demo mode — bypass tabCapture, hit /demo and fan out cards + brain.
+  | { kind: 'run_demo' }
+  | { kind: 'demo_result'; result: ProcessResponse }
+  | { kind: 'reset_demo' }
   | { kind: 'ping' }

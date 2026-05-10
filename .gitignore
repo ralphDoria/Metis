@@ -18,6 +18,9 @@ __pycache__/
 # Test assets (large binaries, not source)
 Assets/
 
+# Local context / planning docs (not part of the codebase)
+Context/
+
 # Generated brain visualization assets (regenerated on server start / per job)
 server/static/
 

@@ -41,6 +41,9 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [session, setSession] = useState<SessionState | null>(null)
   const [now, setNow] = useState<number>(Date.now())
+  const [demoBusy, setDemoBusy] = useState<boolean>(false)
+  const [demoError, setDemoError] = useState<string | null>(null)
+  const [activeTabUrl, setActiveTabUrl] = useState<string>('')
 
   useEffect(() => {
     void refresh()
@@ -54,12 +57,28 @@ export default function App() {
   }, [])
 
   async function refresh() {
-    const [s, sess] = await Promise.all([
+    const [s, sess, tabs] = await Promise.all([
       sendMessage<Settings>({ kind: 'settings_get' }),
       sendMessage<SessionState>({ kind: 'session_get' }),
+      chrome.tabs.query({ active: true, currentWindow: true }),
     ])
     setSettings({ ...DEFAULT_SETTINGS, ...s })
     setSession(sess)
+    setActiveTabUrl(tabs[0]?.url ?? '')
+  }
+
+  const onInstagram = /^https:\/\/(www\.)?instagram\.com\//.test(activeTabUrl)
+
+  async function runDemo() {
+    setDemoError(null)
+    setDemoBusy(true)
+    const resp = await sendMessage<{ ok: boolean; error?: string }>({ kind: 'run_demo' })
+    setDemoBusy(false)
+    if (!resp?.ok) setDemoError(resp?.error ?? 'unknown_error')
+  }
+
+  async function resetDemo() {
+    await sendMessage({ kind: 'reset_demo' })
   }
 
   async function patchSettings(patch: Partial<Settings>) {
@@ -87,6 +106,14 @@ export default function App() {
     <div className="metis-popup-body p-4 flex flex-col gap-3">
       <Header paused={paused} elapsedMs={sessionElapsed} />
 
+      <DemoControl
+        busy={demoBusy}
+        onInstagram={onInstagram}
+        error={demoError}
+        onRun={runDemo}
+        onReset={resetDemo}
+      />
+
       <Hero secondsSaved={totalSecondsSaved} skippedCount={skipped.length} />
 
       <TaxonomyBar slices={taxonomy} />
@@ -110,6 +137,57 @@ export default function App() {
         Enter The Agora →
       </a>
     </div>
+  )
+}
+
+function DemoControl({
+  busy,
+  onInstagram,
+  error,
+  onRun,
+  onReset,
+}: {
+  busy: boolean
+  onInstagram: boolean
+  error: string | null
+  onRun: () => void
+  onReset: () => void
+}) {
+  if (!onInstagram) {
+    return (
+      <section className="metis-card p-3 text-xs text-text-soft">
+        Open <span className="font-mono">instagram.com</span> in this tab — the
+        demo overlay only mounts on Instagram pages.
+      </section>
+    )
+  }
+  return (
+    <section className="metis-card p-3 flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={onRun}
+        disabled={busy}
+        className="metis-cta"
+      >
+        {busy ? 'Loading sample…' : 'Run demo'}
+      </button>
+      <button
+        type="button"
+        onClick={onReset}
+        disabled={busy}
+        className="metis-cta metis-cta--stop"
+      >
+        Reset cards
+      </button>
+      {error && (
+        <div className="text-[11px] text-rose-300 leading-snug">{error}</div>
+      )}
+      <div className="text-[11px] text-text-soft leading-snug">
+        Loads <span className="font-mono">tribev2_sample_predictions.csv</span>{' '}
+        from the server, fans the result into stacked cards, and renders the
+        rotating cortical mesh in the in-page overlay.
+      </div>
+    </section>
   )
 }
 
