@@ -589,3 +589,119 @@ body::after {
   background: transparent;
   color: var(--text-faint);
 }
+
+/* ───── Emotional opening slide ───── */
+
+.emotional-slide .title-stack {
+  max-width: 940px;
+  margin: 0 auto;
+}
+
+.emotional-line {
+  font-size: 2.6em;
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+  margin: 0 0 32px !important;
+  color: var(--text);
+}
+
+.emotional-line em {
+  color: var(--text-faint);
+  font-style: italic;
+  font-weight: 300;
+}
+
+.emotional-line.dim {
+  color: var(--text-faint);
+  font-weight: 300;
+}
+
+.emotional-line.accent {
+  background: linear-gradient(120deg, #a06bf0 0%, #f472b6 55%, #ff8c00 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 500;
+  animation: shimmer 10s ease infinite;
+}
+
+.emotional-coda {
+  margin: 40px auto 0 !important;
+  max-width: 720px;
+  font-size: 0.92em !important;
+  line-height: 1.7 !important;
+  color: var(--text-soft) !important;
+  font-weight: 300;
+}
+
+/* ───── Live offering / QR slide ───── */
+
+.live-offering .title-stack {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.live-title {
+  font-size: 2.2em !important;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 18px 0 36px !important;
+  background: linear-gradient(120deg, #f5f3ff 0%, #a06bf0 60%, #f472b6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(160, 107, 240, 0.32);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+  box-shadow:
+    0 0 0 1px rgba(160, 107, 240, 0.15),
+    0 40px 90px -30px rgba(138, 43, 226, 0.55);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.qr-image {
+  width: 320px;
+  height: 320px;
+  border-radius: 16px;
+  display: block;
+  background: #f5f3ff;
+  padding: 8px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 24px 60px -16px rgba(0, 0, 0, 0.55);
+}
+
+.live-url {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 1.4em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--amethyst-soft);
+  border-bottom: 1px dashed rgba(160, 107, 240, 0.45);
+  padding: 4px 2px 6px;
+}
+
+.live-url:hover {
+  color: var(--amber);
+  border-bottom-color: var(--amber);
+}
+
+.live-sub {
+  margin: 0 !important;
+  font-size: 0.82em !important;
+  color: var(--text-faint) !important;
+  letter-spacing: 0.04em;
+  text-align: center;
+}

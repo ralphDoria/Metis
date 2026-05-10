@@ -31,33 +31,53 @@
               <em>before</em> the next loop fires.
             </p>
             <div class="meta-row">
-              <span class="metis-tag">Manav Joshi</span>
               <span class="metis-tag">2026</span>
               <span class="metis-tag">Prototypes 1 + 2</span>
             </div>
           </div>
         </section>
 
-        <!-- 02. Premise -->
+        <!-- 02. Emotional opening -->
+        <section data-state="title" class="title-slide emotional-slide">
+          <div class="orb" aria-hidden="true"></div>
+          <div class="title-stack">
+            <p class="emotional-line dim fragment fade-up">
+              We called it <em>social</em> media.
+            </p>
+            <p class="emotional-line accent fragment fade-up">
+              The social part is gone.
+            </p>
+            <p class="emotional-coda fragment fade-up">
+              Short-form feeds rewire — silently, every day — the parts of us
+              that knew how to sit with another person.
+              We are more connected than ever, and lonelier than we have ever been.
+              Our attention is shrinking. Our patience is shrinking. Our rooms are emptying.
+            </p>
+          </div>
+        </section>
+
+        <!-- 03. The premise -->
         <section>
-          <h2 class="section-title">The premise</h2>
+          <h2 class="section-title">What the scroll is taking</h2>
           <div class="two-col">
             <div>
               <p class="lede">
-                Short-form feeds aren't entertainment. They're <em>neural conditioning</em>
-                that target the same circuits as casinos and slot machines.
+                Short-form was sold as connection. The evidence points the other
+                direction — and our brains are picking up the bill.
               </p>
               <ul class="bullets">
-                <li>Reward (OFC, ACC) lights up on every novel hook</li>
-                <li>Salience (insula, STS) keeps the next swipe loaded</li>
-                <li>Control (dlPFC) gets quieter the longer you scroll</li>
+                <li><em>Isolation.</em> Heavy scrollers report fewer close friends, less time in person, sharper loneliness — every year, on every cohort.</li>
+                <li><em>Attention.</em> Sustained focus has collapsed to ~47 seconds. Deep reading, deep listening, deep thinking are on the same curve.</li>
+                <li><em>Neuroplasticity.</em> Every novelty hook reinforces the dopamine loop and quiets prefrontal control. The brain learns the shape of the feed.</li>
               </ul>
             </div>
             <div class="callout">
-              <span class="callout-tag">Result</span>
+              <span class="callout-tag">Thesis</span>
               <p>
-                You haven't decided to keep watching. You're just downstream
-                of a system that has already decided for you.
+                Reels are net-negative for the people who scroll them.
+                Metis exists to <em>transition users out</em> of short-form
+                and back into the social — long-form discussion, real tribes,
+                actual rooms with actual people in them.
               </p>
             </div>
           </div>
@@ -223,32 +243,6 @@
           </div>
         </section>
 
-        <!-- 09. The latency problem -->
-        <section>
-          <h2 class="section-title">The latency problem</h2>
-          <div class="two-col">
-            <div>
-              <p>
-                Modal inference takes <em>seconds</em>, not milliseconds.
-                A naïve "capture → wait → maybe skip" loop is too slow —
-                the user has already finished the reel.
-              </p>
-              <ul class="bullets">
-                <li>Cold start: 5–30 s</li>
-                <li>Warm call + network: 4–8 s</li>
-                <li>Average reel: 15–45 s</li>
-              </ul>
-            </div>
-            <div class="callout">
-              <span class="callout-tag">Insight</span>
-              <p>
-                Predict on reel <em>N + 1</em> while you watch reel <em>N</em>.
-                By the time you scroll, the verdict is already cached.
-              </p>
-            </div>
-          </div>
-        </section>
-
         <!-- 10. Prefetch trick -->
         <section>
           <h2 class="section-title">Speculative prefetch</h2>
@@ -394,10 +388,9 @@ def cancel_process(job_id: str):
             <div>
               <span class="metis-tag">Soon</span>
               <ul class="bullets">
-                <li>Baseline normalization — TribeV2 over neutral nature footage</li>
-                <li>Real auth + per-user session history</li>
-                <li>Hardening: multi-worker FastAPI + shared cancel registry</li>
-                <li>Polish: count-up animations, gradient tile renders</li>
+                <li>Baseline normalization — TribeV2 against neutral nature footage</li>
+                <li>Live tribe matching from session signature → push the user out of the feed and into a room of people who care about the same thing</li>
+                <li>Group-level analytics for tribes (anonymized, opt-in)</li>
               </ul>
             </div>
             <div>
@@ -405,22 +398,41 @@ def cancel_process(job_id: str):
               <ul class="bullets">
                 <li>TikTok &middot; YouTube Shorts adapters</li>
                 <li>Fast-path heuristic model for sub-second pre-skip</li>
-                <li>The Agora — shared "tribes" for offline depth</li>
-                <li>Mobile path (iOS sandbox blocks injection — research only)</li>
+                <li>Mobile path (iOS sandbox blocks injection — research-track only)</li>
               </ul>
             </div>
           </div>
         </section>
 
-        <!-- 16. Closing -->
+        <!-- 16. Live offering -->
+        <section data-state="title" class="title-slide live-offering">
+          <div class="orb" aria-hidden="true"></div>
+          <div class="title-stack">
+            <span class="eyebrow">Live now</span>
+            <h2 class="live-title">Scan. Drop in a reel. Watch your brain.</h2>
+            <div class="qr-card">
+              <img
+                class="qr-image"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=14&color=050505&bgcolor=f5f3ff&data=https%3A%2F%2Ftrymetis.us"
+                alt="QR code linking to trymetis.us"
+              />
+              <a href="https://trymetis.us" target="_blank" rel="noreferrer" class="live-url">trymetis.us</a>
+              <p class="live-sub">
+                No download. No account. The full pipeline, in your browser.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 17. Closing -->
         <section data-state="title" class="title-slide closing">
           <div class="orb amber" aria-hidden="true"></div>
           <div class="title-stack">
             <span class="eyebrow">Metis</span>
             <h1 class="hero-title shimmer">Stop being scrolled.</h1>
             <p class="hero-sub">
-              <a href="https://metis.mnkjoshi.ca" target="_blank" rel="noreferrer">
-                metis.mnkjoshi.ca
+              <a href="https://trymetis.us" target="_blank" rel="noreferrer">
+                trymetis.us
               </a>
             </p>
           </div>

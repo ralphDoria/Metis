@@ -48,6 +48,7 @@ app.add_middleware(
         r"^(chrome-extension://.+|https?://("
         r"localhost(:\d+)?"
         r"|(.+\.)?mnkjoshi\.ca"
+        r"|(.+\.)?trymetis\.us"
         r"|trymetis\.web\.app"
         r"|trymetis--[a-z0-9-]+\.web\.app"
         r"|(.+\.)?instagram\.com"
