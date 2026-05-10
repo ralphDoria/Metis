@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metis — A Cognitive Sanctuary</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- 01. Title -->
+        <section data-state="title" class="title-slide">
+          <div class="orb" aria-hidden="true"></div>
+          <div class="title-stack">
+            <span class="eyebrow">A Cognitive Sanctuary</span>
+            <h1 class="hero-title">Metis</h1>
+            <p class="hero-sub">
+              An awareness layer for addictive feeds.<br />
+              We predict the neural response your scroll provokes —
+              <em>before</em> the next loop fires.
+            </p>
+            <div class="meta-row">
+              <span class="metis-tag">Manav Joshi</span>
+              <span class="metis-tag">2026</span>
+              <span class="metis-tag">Prototypes 1 + 2</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02. Premise -->
+        <section>
+          <h2 class="section-title">The premise</h2>
+          <div class="two-col">
+            <div>
+              <p class="lede">
+                Short-form feeds aren't entertainment. They're <em>neural conditioning</em>
+                that target the same circuits as casinos and slot machines.
+              </p>
+              <ul class="bullets">
+                <li>Reward (OFC, ACC) lights up on every novel hook</li>
+                <li>Salience (insula, STS) keeps the next swipe loaded</li>
+                <li>Control (dlPFC) gets quieter the longer you scroll</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <span class="callout-tag">Result</span>
+              <p>
+                You haven't decided to keep watching. You're just downstream
+                of a system that has already decided for you.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03. The idea -->
+        <section>
+          <h2 class="section-title">What if the feed could see itself?</h2>
+          <p class="lede">
+            Predict the brain's response to each reel <em>as you watch it</em> —
+            then surface that signal back, in time to matter.
+          </p>
+          <div class="three-cards">
+            <div class="card">
+              <span class="card-number">01</span>
+              <h3>Watch</h3>
+              <p>The extension mirrors the active video frame for the first 10s of every reel.</p>
+            </div>
+            <div class="card amber">
+              <span class="card-number">02</span>
+              <h3>Predict</h3>
+              <p>TribeV2 — a published fMRI prediction model — outputs predicted cortical activation across 20,484 vertices.</p>
+            </div>
+            <div class="card rose">
+              <span class="card-number">03</span>
+              <h3>Surface</h3>
+              <p>A score, a pattern, and a verdict — passively, or as a soft auto-skip.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04. Pipeline -->
+        <section>
+          <h2 class="section-title">The pipeline</h2>
+          <pre class="ascii-diagram">
+   <span class="step">video bytes</span>
+        ▼
+   <span class="step amethyst">TribeV2  </span>     fMRI prediction model on Modal A10G GPU
+        ▼
+   <span class="step">voxels (T × 20,484 cortical vertices)</span>
+        ▼
+   <span class="step amber">parser   </span>     Destrieux atlas → 7 ROIs → 9 pattern templates
+        ▼
+   <span class="step rose">verdict  </span>     {score, label, patterns, feedback}
+          </pre>
+          <p class="caption">
+            <code>score = (reward + 0.5·salience) / (control + ε)</code>
+            &middot; discretized to <em>low / average / elevated / high</em>.
+          </p>
+        </section>
+
+        <!-- 05. Architecture -->
+        <section>
+          <h2 class="section-title">Architecture</h2>
+          <pre class="ascii-diagram tight">
+ React app  ┐                                  Browser
+ Extension  ├─POST /process─→  FastAPI   :8000  / metis.mnkjoshi.ca
+ popup + SW ┘                     │
+                                  │  Tribe.infer.spawn(bytes)
+                                  ▼
+                           ╔══════════════╗
+                           ║ Modal cloud  ║   GPU A10G + persistent volume
+                           ║   TribeV2    ║
+                           ╚══════╤═══════╝
+                                  │ preds (T × 20484)
+                                  ▼
+                           parser → JSON
+                                  │
+                                  ▼
+                           Firestore (best-effort persistence)
+          </pre>
+          <p class="caption">
+            Heavy ML lives on Modal. The parser stays local for fast iteration.
+            Browser never talks to Modal directly.
+          </p>
+        </section>
+
+        <!-- 06. Tech stack -->
+        <section>
+          <h2 class="section-title">Tech</h2>
+          <div class="stack-grid">
+            <div class="stack-cell">
+              <span class="metis-tag">Frontend</span>
+              <ul>
+                <li>React 19 + Vite</li>
+                <li>Tailwind &middot; Framer Motion</li>
+                <li>react-three-fiber (3D cortex)</li>
+              </ul>
+            </div>
+            <div class="stack-cell">
+              <span class="metis-tag">Extension</span>
+              <ul>
+                <li>Manifest V3</li>
+                <li>@crxjs/vite-plugin</li>
+                <li>TypeScript &middot; Shadow DOM overlay</li>
+              </ul>
+            </div>
+            <div class="stack-cell">
+              <span class="metis-tag">Backend</span>
+              <ul>
+                <li>FastAPI &middot; Python 3.12</li>
+                <li>numpy &middot; nilearn &middot; nibabel</li>
+                <li>Firestore (optional)</li>
+              </ul>
+            </div>
+            <div class="stack-cell">
+              <span class="metis-tag">Inference</span>
+              <ul>
+                <li>Modal (GPU A10G)</li>
+                <li>TribeV2 + Llama-3.2 deps</li>
+                <li>spawn / cancel pattern</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 07. Prototype 1 -->
+        <section>
+          <h2 class="section-title">Prototype 1 — Upload</h2>
+          <div class="two-col">
+            <div>
+              <p class="lede">
+                A single page. Drop in a downloaded reel.
+                Watch your own brain unfold.
+              </p>
+              <ul class="bullets">
+                <li>Multipart upload to <code>POST /process</code></li>
+                <li>3D cortex shaded by predicted activation</li>
+                <li>Pattern cards: <em>Dopamine bait</em>, <em>Comparison spiral</em>, …</li>
+                <li>Human-readable feedback paragraph</li>
+              </ul>
+            </div>
+            <div class="callout amber">
+              <span class="callout-tag">Status</span>
+              <p>
+                Live at <code>metis.mnkjoshi.ca</code>. The end-to-end pipeline
+                works on arbitrary uploaded video.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 08. Prototype 2 -->
+        <section>
+          <h2 class="section-title">Prototype 2 — Extension</h2>
+          <p class="lede">
+            Apply the same pipeline to a <em>live</em> Instagram Reels feed,
+            in the browser, without lifting a finger.
+          </p>
+          <div class="three-cards small">
+            <div class="card">
+              <h3>Watch</h3>
+              <p>Content script observes <code>&lt;video&gt;</code> elements via dual IntersectionObservers.</p>
+            </div>
+            <div class="card amber">
+              <h3>Capture</h3>
+              <p><code>captureStream()</code> + <code>MediaRecorder</code> emits a 10s WebM chunk per reel.</p>
+            </div>
+            <div class="card rose">
+              <h3>Intervene</h3>
+              <p>Service worker POSTs to Modal; if score is high, content script auto-advances the feed.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 09. The latency problem -->
+        <section>
+          <h2 class="section-title">The latency problem</h2>
+          <div class="two-col">
+            <div>
+              <p>
+                Modal inference takes <em>seconds</em>, not milliseconds.
+                A naïve "capture → wait → maybe skip" loop is too slow —
+                the user has already finished the reel.
+              </p>
+              <ul class="bullets">
+                <li>Cold start: 5–30 s</li>
+                <li>Warm call + network: 4–8 s</li>
+                <li>Average reel: 15–45 s</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <span class="callout-tag">Insight</span>
+              <p>
+                Predict on reel <em>N + 1</em> while you watch reel <em>N</em>.
+                By the time you scroll, the verdict is already cached.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. Prefetch trick -->
+        <section>
+          <h2 class="section-title">Speculative prefetch</h2>
+          <pre class="ascii-diagram tight">
+ viewport
+ ┌─────────────────────────┐
+ │                         │   ← prefetchIO band  (rootMargin 200%)
+ │   ┌─────────────────┐   │
+ │   │   ▶ reel N (active) ┼──→ verdict cached or arriving
+ │   └─────────────────┘   │
+ │   ┌─────────────────┐   │
+ │   │   reel N+1      ┼──→ <span class="amethyst-text">capture started speculatively</span>
+ │   └─────────────────┘   │
+ │   ┌─────────────────┐   │
+ │   │   reel N+2      ┼──→ queued
+ │   └─────────────────┘   │
+ └─────────────────────────┘
+          </pre>
+          <p class="caption">
+            Two IntersectionObservers — <code>activeIO</code> at threshold 0.6 (foreground),
+            <code>prefetchIO</code> at <code>rootMargin: 200%</code> (incoming).
+            Capture starts the moment a reel enters the prefetch band.
+          </p>
+        </section>
+
+        <!-- 11. First 10 seconds -->
+        <section>
+          <h2 class="section-title">First 10 seconds only</h2>
+          <p class="lede">
+            The hook lives in the opening seconds. After 10 s the user is
+            committed and the verdict can't drive a useful intervention.
+          </p>
+          <ul class="bullets">
+            <li>Prefetched (paused) reels: seek to 0, capture the full first 10 s</li>
+            <li>Active reels: capture the remainder of the first-10s window</li>
+            <li>Past 10 s: skip processing entirely — save Modal compute</li>
+            <li>Boundary detected via <code>requestVideoFrameCallback</code> — recorder stops the moment <code>currentTime ≥ 10</code></li>
+          </ul>
+        </section>
+
+        <!-- 12. Cancellation -->
+        <section>
+          <h2 class="section-title">Cancel on user skip</h2>
+          <p class="lede">
+            If you scroll past a reel before our verdict lands, we kill the GPU run.
+          </p>
+          <pre class="code-block"><code class="language-python">
+@app.post("/process")
+async def process(video: UploadFile, job_id: str | None = None):
+    fc = Tribe().infer.spawn(video_bytes)
+    if job_id:
+        ACTIVE_JOBS[job_id] = fc
+    result = await asyncio.to_thread(fc.get)   # ← cancellable
+    ...
+
+@app.post("/process/cancel/{job_id}")
+def cancel_process(job_id: str):
+    fc = ACTIVE_JOBS.pop(job_id, None)
+    if fc: fc.cancel()                          # ← Modal kills the GPU job
+          </code></pre>
+          <p class="caption">
+            Content script emits <code>cancel_capture</code> on <code>'lost'</code>;
+            SW aborts the fetch and fires <code>POST /process/cancel/{job_id}</code>.
+          </p>
+        </section>
+
+        <!-- 13. Skip mechanics -->
+        <section>
+          <h2 class="section-title">Skip mechanics</h2>
+          <p>Per-platform fallback chain — first path that advances the feed wins:</p>
+          <table class="skip-table">
+            <thead>
+              <tr><th>Path</th><th>Trigger</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><code>button[aria-label="Next"].click()</code></td>
+                <td>Most reliable — user-trusted event</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>synthetic <code>ArrowDown</code></td>
+                <td>Works even if button is hidden on mobile</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><code>scrollBy(top: innerHeight)</code></td>
+                <td>Brute-force fallback against the feed root</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="caption">Throttled to one skip per 1.5 s. Sensitivity floors: gentle 0.85, balanced 0.78, strict 0.70.</p>
+        </section>
+
+        <!-- 14. Popup UI -->
+        <section>
+          <h2 class="section-title">The popup</h2>
+          <div class="two-col">
+            <div>
+              <p>
+                A 360 × 480 mission control. Mirrors the nebula palette of the web app.
+                Lives in the toolbar; opens to a quiet, glowing summary of your session.
+              </p>
+              <ul class="bullets">
+                <li>Active-monitoring pulse + session clock</li>
+                <li>Time Reclaimed (shimmering count-up)</li>
+                <li>Emotional taxonomy bar</li>
+                <li>Recent skips (with primary pattern)</li>
+                <li>Sensitivity selector &middot; pause / snooze</li>
+                <li>CTA → Enter the Agora</li>
+              </ul>
+            </div>
+            <div class="popup-mock">
+              <div class="popup-frame">
+                <div class="popup-header">
+                  <span class="dot"></span>
+                  <span class="popup-tag">Active monitoring</span>
+                  <span class="popup-clock">00:14:22</span>
+                </div>
+                <div class="popup-card">
+                  <div class="popup-tag muted">Time reclaimed today</div>
+                  <div class="popup-hero">42m</div>
+                  <div class="popup-sub">14 detrimental loops bypassed</div>
+                </div>
+                <div class="popup-card">
+                  <div class="popup-tag muted">Emotional taxonomy</div>
+                  <div class="meter">
+                    <span style="flex: 0.4; background:#a06bf0"></span>
+                    <span style="flex: 0.35; background:#f472b6"></span>
+                    <span style="flex: 0.25; background:#ff8c00"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 15. Open items -->
+        <section>
+          <h2 class="section-title">What's next</h2>
+          <div class="two-col">
+            <div>
+              <span class="metis-tag">Soon</span>
+              <ul class="bullets">
+                <li>Baseline normalization — TribeV2 over neutral nature footage</li>
+                <li>Real auth + per-user session history</li>
+                <li>Hardening: multi-worker FastAPI + shared cancel registry</li>
+                <li>Polish: count-up animations, gradient tile renders</li>
+              </ul>
+            </div>
+            <div>
+              <span class="metis-tag">Later</span>
+              <ul class="bullets">
+                <li>TikTok &middot; YouTube Shorts adapters</li>
+                <li>Fast-path heuristic model for sub-second pre-skip</li>
+                <li>The Agora — shared "tribes" for offline depth</li>
+                <li>Mobile path (iOS sandbox blocks injection — research only)</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 16. Closing -->
+        <section data-state="title" class="title-slide closing">
+          <div class="orb amber" aria-hidden="true"></div>
+          <div class="title-stack">
+            <span class="eyebrow">Metis</span>
+            <h1 class="hero-title shimmer">Stop being scrolled.</h1>
+            <p class="hero-sub">
+              <a href="https://metis.mnkjoshi.ca" target="_blank" rel="noreferrer">
+                metis.mnkjoshi.ca
+              </a>
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+    <script>
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        center: true,
+        hash: true,
+        transition: 'fade',
+        backgroundTransition: 'fade',
+        plugins: [RevealHighlight],
+      })
+    </script>
+  </body>
+</html>
