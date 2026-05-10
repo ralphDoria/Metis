@@ -183,6 +183,84 @@ function App() {
             </span>
           </p>
           <p className="result-feedback">{result.feedback}</p>
+
+          {result.variables && (
+            <div className="variables-block">
+              <h3 className="block-heading">Brain regions</h3>
+              <div className="variables-grid">
+                {result.variables.map((v) => (
+                  <div key={v.key} className="variable-row">
+                    <span className="variable-name">{v.name}</span>
+                    <span className="variable-value">{v.value.toFixed(3)}</span>
+                    <span className={`qualifier-badge qualifier-${v.qualifier}`}>
+                      {v.qualifier}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="block-caveat">
+                Qualifiers are per-session percentile (top third = high, bottom third = low) —
+                relative within this clip until a neutral-footage baseline is computed.
+              </p>
+            </div>
+          )}
+
+          {result.score_breakdown && (
+            <div className="breakdown-block">
+              <h3 className="block-heading">Addictiveness score</h3>
+              <div className="breakdown-formula">
+                {result.score_breakdown.formula}
+              </div>
+              <div className="breakdown-grid">
+                <div className="breakdown-row">
+                  <span>Reward composite</span>
+                  <span>{result.score_breakdown.reward_composite.toFixed(3)}</span>
+                </div>
+                <div className="breakdown-row">
+                  <span>Salience composite</span>
+                  <span>{result.score_breakdown.salience_composite.toFixed(3)}</span>
+                </div>
+                <div className="breakdown-row">
+                  <span>Control composite</span>
+                  <span>{result.score_breakdown.control_composite.toFixed(3)}</span>
+                </div>
+                <div className="breakdown-row breakdown-row-total">
+                  <span>Raw score</span>
+                  <span>{result.score_breakdown.raw_score.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {result.patterns && (
+            <div className="patterns-block">
+              <h3 className="block-heading">Detected patterns</h3>
+              {result.patterns.length === 0 ? (
+                <p className="block-empty">
+                  No clear pattern emerged — variables are mixed without a strong signature.
+                </p>
+              ) : (
+                <ul className="patterns-list">
+                  {result.patterns.map((p) => (
+                    <li key={p.key} className="pattern-card">
+                      <div className="pattern-card-header">
+                        <span className="pattern-label">{p.label}</span>
+                        <span className={`confidence-badge confidence-${p.confidence_label}`}>
+                          {p.confidence_label} confidence
+                        </span>
+                      </div>
+                      <p className="pattern-description">{p.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="block-caveat">
+                Reverse inference is approximate — brain regions serve multiple functions.
+                Confidence reflects pattern plausibility, not data certainty.
+              </p>
+            </div>
+          )}
+
           <button
             type="button"
             className="reset-button"
