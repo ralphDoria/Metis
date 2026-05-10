@@ -170,6 +170,24 @@
   line-height: 1.5;
 }
 
+.reset-button {
+  align-self: flex-start;
+  font-size: 13px;
+  background: none;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 8px 18px;
+  color: #6b6b6b;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  margin-top: 4px;
+}
+
+.reset-button:hover {
+  border-color: #9a9a9a;
+  color: #0a0a0a;
+}
+
 .demo-section {
   border-top: 1px solid #e5e5e5;
   padding-top: 32px;

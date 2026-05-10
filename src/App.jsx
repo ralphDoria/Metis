@@ -183,10 +183,17 @@ function App() {
             </span>
           </p>
           <p className="result-feedback">{result.feedback}</p>
+          <button
+            type="button"
+            className="reset-button"
+            onClick={() => setResult(null)}
+          >
+            Reset
+          </button>
         </section>
       )}
 
-      {result?.brain && <BrainView brain={result.brain} />}
+      <BrainView brain={result?.brain ?? null} />
     </main>
   )
 }

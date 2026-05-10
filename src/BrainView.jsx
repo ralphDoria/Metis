@@ -9,6 +9,15 @@ const HEMI_BYTES = N_VERTS_PER_HEMI * 3
 const FRAME_BYTES = HEMI_BYTES * 2
 const SCRUB_RATE_HZ = 10 // timesteps per second when auto-scrubbing
 
+// Geometry GLBs are pre-baked by the server at startup (see ensure_geometry
+// in server/brain_export.py). Loaded once on mount, reused across every job.
+const LH_GEOM_URL = '/static/brain_left.glb'
+const RH_GEOM_URL = '/static/brain_right.glb'
+
+// Color used for the empty (pre-data) state — uniform light grey on every
+// vertex. Matches a generic anatomical brain look without implying activation.
+const NEUTRAL_RGB = 200
+
 /**
  * Find the first Mesh under a GLTF scene and return its geometry.
  * GLTFLoader returns a scene graph; trimesh exports nest the mesh one level deep.
@@ -40,6 +49,7 @@ export default function BrainView({ brain }) {
   const scrubbingRef = useRef(false) // user actively dragging slider
   const [timestep, setTimestep] = useState(0)
   const [meshesReady, setMeshesReady] = useState(false)
+  const [hasData, setHasData] = useState(false)
   const [error, setError] = useState('')
 
   // ---- Init Three.js scene once. ----
@@ -161,26 +171,14 @@ export default function BrainView({ brain }) {
     }
   }, [])
 
-  // ---- Load hemisphere GLBs + color buffer when `brain` payload changes. ----
+  // ---- Load geometry once on mount. Same fsaverage5 pial mesh drives every
+  //      job, so we fetch it from the server's pre-baked static endpoint and
+  //      keep it in the scene for the lifetime of the component. The empty
+  //      (pre-data) state shows this mesh painted neutral grey, auto-rotating.
   useEffect(() => {
-    if (!brain || !stateRef.current) return
+    if (!stateRef.current) return
     const state = stateRef.current
     let cancelled = false
-    setMeshesReady(false)
-    setError('')
-
-    // Drop previous group + meshes if we're reanalyzing.
-    if (state.group) {
-      state.scene.remove(state.group)
-      state.group = null
-    }
-    for (const key of ['lh', 'rh']) {
-      if (state[key]) {
-        state[key].geometry?.dispose?.()
-        state[key].material?.dispose?.()
-        state[key] = null
-      }
-    }
 
     const loader = new GLTFLoader()
     const loadHemi = (url) =>
@@ -188,15 +186,8 @@ export default function BrainView({ brain }) {
         loader.load(`${API_BASE}${url}`, (gltf) => resolve(gltf), undefined, reject)
       })
 
-    Promise.all([
-      loadHemi(brain.left_geom_url),
-      loadHemi(brain.right_geom_url),
-      fetch(`${API_BASE}${brain.colors_url}`).then((r) => {
-        if (!r.ok) throw new Error(`colors: ${r.status}`)
-        return r.arrayBuffer()
-      }),
-    ])
-      .then(([lhGltf, rhGltf, colorBuf]) => {
+    Promise.all([loadHemi(LH_GEOM_URL), loadHemi(RH_GEOM_URL)])
+      .then(([lhGltf, rhGltf]) => {
         if (cancelled) return
         const lh = firstMesh(lhGltf.scene)
         const rh = firstMesh(rhGltf.scene)
@@ -223,10 +214,6 @@ export default function BrainView({ brain }) {
         //   brain +X (right)     → world +Z (faces camera; lateral right view)
         //   brain +Y (anterior)  → world +X (anterior on viewer's right)
         //   brain +Z (superior)  → world +Y (top of head up on screen)
-        // Vertex positions inside the geometry stay RAS — only the group's
-        // transform changes — so ROI math + future overlays remain in
-        // brain-native coords. Camera + OrbitControls stay default (no
-        // controls inversion).
         const group = new THREE.Group()
         group.add(lh)
         group.add(rh)
@@ -250,25 +237,73 @@ export default function BrainView({ brain }) {
         state.camera.lookAt(0, 0, 0)
         state.defaultPos.copy(state.camera.position)
         state.defaultTarget.copy(state.controls.target)
-        // Re-enable auto-rotate after a load (covers re-analyze case where a
-        // previous tween may have left it off).
-        state.controls.autoRotate = true
 
-        // Hand the color buffer + scratch buffers to the raf loop, which
-        // drives both the auto-scrub and the smooth per-frame color lerp.
-        state.colors = new Uint8Array(colorBuf)
-        state.nTimesteps = brain.n_timesteps
-        state.playT = 0
-        state.scratchLh = new Uint8Array(HEMI_BYTES)
-        state.scratchRh = new Uint8Array(HEMI_BYTES)
-        state.lastDisplayedT = -1
-        state.lastFrameMs = 0
-        setTimestep(0)
+        // Paint uniform neutral grey on every vertex. This is the empty-state
+        // look; once a `brain` payload arrives, the raf loop overwrites these
+        // bytes per frame with interpolated activation colors.
+        const grey = new Uint8Array(HEMI_BYTES).fill(NEUTRAL_RGB)
+        writeVertexColors(lh.geometry, grey)
+        writeVertexColors(rh.geometry, grey)
+
         setMeshesReady(true)
       })
       .catch((err) => {
-        console.error('BrainView load failed:', err)
-        if (!cancelled) setError(err.message ?? 'Failed to load brain assets')
+        console.error('BrainView geometry load failed:', err)
+        if (!cancelled) setError(err.message ?? 'Failed to load brain geometry')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // ---- Load color buffer when `brain` payload arrives, clear when it goes
+  //      away. Geometry stays put; only the per-vertex color stream changes.
+  useEffect(() => {
+    if (!stateRef.current) return
+    const state = stateRef.current
+
+    if (!brain) {
+      // Empty / reset state: stop the auto-scrub from writing colors and
+      // repaint the mesh uniform grey so the user sees a clean wipe rather
+      // than a frozen activation frame. Geometry (and rotation) stay put.
+      state.colors = null
+      state.nTimesteps = 0
+      state.lastDisplayedT = -1
+      if (state.lh && state.rh) {
+        const grey = new Uint8Array(HEMI_BYTES).fill(NEUTRAL_RGB)
+        writeVertexColors(state.lh.geometry, grey)
+        writeVertexColors(state.rh.geometry, grey)
+      }
+      setHasData(false)
+      return
+    }
+
+    let cancelled = false
+    setError('')
+
+    fetch(`${API_BASE}${brain.colors_url}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`colors: ${r.status}`)
+        return r.arrayBuffer()
+      })
+      .then((colorBuf) => {
+        if (cancelled) return
+        // Atomic swap: previous activation is held until this assignment, so
+        // re-analyze never flashes grey.
+        state.colors = new Uint8Array(colorBuf)
+        state.nTimesteps = brain.n_timesteps
+        state.playT = 0
+        state.scratchLh = state.scratchLh ?? new Uint8Array(HEMI_BYTES)
+        state.scratchRh = state.scratchRh ?? new Uint8Array(HEMI_BYTES)
+        state.lastDisplayedT = -1
+        state.lastFrameMs = 0
+        setTimestep(0)
+        setHasData(true)
+      })
+      .catch((err) => {
+        console.error('BrainView color load failed:', err)
+        if (!cancelled) setError(err.message ?? 'Failed to load brain colors')
       })
 
     return () => {
@@ -281,34 +316,38 @@ export default function BrainView({ brain }) {
       <h2 className="brain-heading">Brain activity</h2>
       <div ref={containerRef} className="brain-canvas-wrap" />
       {error && <p className="error">{error}</p>}
-      <div className="brain-controls">
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0, (brain?.n_timesteps ?? 1) - 1)}
-          value={timestep}
-          onPointerDown={() => {
-            scrubbingRef.current = true
-          }}
-          onChange={(e) => {
-            const v = Number(e.target.value)
-            setTimestep(v)
-            if (stateRef.current) {
-              stateRef.current.playT = v
-              stateRef.current.lastDisplayedT = v
-            }
-          }}
-          className="brain-slider"
-          disabled={!meshesReady}
-        />
-        <span className="brain-time">
-          t = {timestep} / {Math.max(0, (brain?.n_timesteps ?? 1) - 1)}
-        </span>
-      </div>
-      <div className="brain-legend">
-        <span className="brain-legend-bar" />
-        <span className="brain-legend-text">low → high</span>
-      </div>
+      {hasData && (
+        <div className="brain-controls">
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, (brain?.n_timesteps ?? 1) - 1)}
+            value={timestep}
+            onPointerDown={() => {
+              scrubbingRef.current = true
+            }}
+            onChange={(e) => {
+              const v = Number(e.target.value)
+              setTimestep(v)
+              if (stateRef.current) {
+                stateRef.current.playT = v
+                stateRef.current.lastDisplayedT = v
+              }
+            }}
+            className="brain-slider"
+            disabled={!meshesReady}
+          />
+          <span className="brain-time">
+            t = {timestep} / {Math.max(0, (brain?.n_timesteps ?? 1) - 1)}
+          </span>
+        </div>
+      )}
+      {hasData && (
+        <div className="brain-legend">
+          <span className="brain-legend-bar" />
+          <span className="brain-legend-text">low → high</span>
+        </div>
+      )}
     </section>
   )
 }
