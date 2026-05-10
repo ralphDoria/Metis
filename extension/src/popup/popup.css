@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --metis-void: #050505;
+  --metis-amethyst: #8a2be2;
+  --metis-amethyst-soft: #a06bf0;
+  --metis-amber: #ff8c00;
+  --metis-rose: #f472b6;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+}
+
+.metis-popup-body {
+  width: 360px;
+  min-height: 480px;
+  background: radial-gradient(120% 80% at 50% -10%, rgba(138, 43, 226, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, #050505 0%, #020203 100%);
+  color: #f5f3ff;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.metis-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(22px);
+}
+
+.metis-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--metis-amethyst-soft);
+  box-shadow: 0 0 0 4px rgba(160, 107, 240, 0.16);
+  animation: metis-pulse 1.6s ease-in-out infinite;
+}
+
+.metis-pulse-dot.amber {
+  background: var(--metis-amber);
+  box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.18);
+}
+
+.metis-pulse-dot.muted {
+  background: rgba(245, 243, 255, 0.4);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes metis-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.18); opacity: 0.78; }
+}
+
+.metis-shimmer-text {
+  background: linear-gradient(120deg, #a06bf0 0%, #f472b6 50%, #ff8c00 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: metis-shimmer 8s ease infinite;
+}
+
+@keyframes metis-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.metis-meter {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.metis-meter > span {
+  display: block;
+  height: 100%;
+  transition: width 320ms ease;
+}
+
+button.metis-pill {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 243, 255, 0.78);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+button.metis-pill.is-active {
+  background: linear-gradient(120deg, rgba(138, 43, 226, 0.45), rgba(160, 107, 240, 0.35));
+  color: #fff;
+  border-color: rgba(138, 43, 226, 0.6);
+}
+
+button.metis-pill:hover:not(:disabled) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+a.metis-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(138, 43, 226, 0.4);
+  background: linear-gradient(120deg, rgba(138, 43, 226, 0.28), rgba(244, 114, 182, 0.18));
+  color: #f5f3ff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+a.metis-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px -10px rgba(138, 43, 226, 0.5);
+}
+
+.metis-tag {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245, 243, 255, 0.55);
+}
