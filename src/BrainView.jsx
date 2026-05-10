@@ -348,8 +348,14 @@ export default function BrainView({ brain, compact = false, className = '' }) {
         )}
       </div>
       {!compact && error && <p className="metis-error">{error}</p>}
-      {!compact && hasData && (
-        <div className="metis-brainview__controls">
+      {hasData && (
+        <div
+          className={
+            compact
+              ? 'metis-brainview__controls metis-brainview__controls--overlay'
+              : 'metis-brainview__controls'
+          }
+        >
           <input
             type="range"
             min={0}

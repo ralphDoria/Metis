@@ -1105,6 +1105,7 @@
 /* Compact mode: drop the section chrome so the renderer fills its parent
    transparently (e.g. when used as the hero "blob" on the lander). */
 .metis-brainview--compact {
+  position: relative;
   width: 100%;
   height: 100%;
   gap: 0;
@@ -1116,4 +1117,29 @@
   border: none;
   border-radius: 0;
   background: transparent;
+}
+
+/* Slider overlay: invisible by default, fades in on hover/focus over the
+   compact brain. Sits at the bottom of the canvas without pushing layout. */
+.metis-brainview__controls--overlay {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(10, 10, 18, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.metis-brainview--compact:hover .metis-brainview__controls--overlay,
+.metis-brainview--compact:focus-within .metis-brainview__controls--overlay {
+  opacity: 1;
+  pointer-events: auto;
 }
